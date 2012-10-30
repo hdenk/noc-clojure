@@ -1,6 +1,6 @@
 (ns nature-of-code.random-walk
   "Random Walker (No Vectors)"
-  (:use quil.core))
+  (:require [quil.core :as q]))
 
 ; TODO entfernen ?
 (defmacro dbg
@@ -13,7 +13,9 @@
 (def params 
   {:size [400 400]
    :background 0
-   :frame-rate 30})
+   :frame-rate 30
+   :rect-width 20
+   :rect-height 20})
 
 (defn make-walker []
   (atom 
@@ -26,14 +28,16 @@
         dy (- 2 (rand 4))
         x (+ (:x @walker) dx)
         y (+ (:y @walker) dy)]
-    (swap! walker assoc :x (constrain x 0 (dec (width))))
-    (swap! walker assoc :y (constrain y 0 (dec (height)))))) 
+    (swap! walker assoc 
+        :x (q/constrain x 0 (dec (q/width)))
+        :y (q/constrain y 0 (dec (q/height)))))
+  walker)
 
 (defn render [walker]
-  (stroke 0)
-  (fill 175)
-  (rect-mode processing.core.PConstants/CENTER)
-  (rect (:x walker), (:y walker), 40, 40))
+  (q/stroke 0)
+  (q/fill 175)
+  (q/rect-mode processing.core.PConstants/CENTER)
+  (q/rect (:x @walker), (:y @walker), (params :rect-width), (params :rect-height)))
 
 (defn gen-draw-fn [walker] 
   "Run the walker object"
@@ -41,10 +45,10 @@
       (do (dbg walker) (-> walker (walk) (render))))) ; TODO remove dbg
 
 (defn setup []
-  (frame-rate (params :frame-rate))
-  (background (params :background)))
+  (q/frame-rate (params :frame-rate))
+  (q/background (params :background)))
 
-(defsketch random-walk
+(q/defsketch random-walk
   :title "random-walk"
   :setup setup
   :draw (gen-draw-fn (make-walker))
