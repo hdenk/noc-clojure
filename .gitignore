@@ -2,3 +2,4 @@
 .lein*
 /lib/
 /classes/
+/native/
