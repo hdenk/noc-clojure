@@ -24,8 +24,8 @@
 
 (defn walk [walker]
   "Randomly move up, down, left, right, or stay in one place"
-  (let [dx (- 2 (rand 4))
-        dy (- 2 (rand 4))
+  (let [dx (q/random -2 2)
+        dy (q/random -2 2)
         x (+ (:x @walker) dx)
         y (+ (:y @walker) dy)]
     (swap! walker assoc 
@@ -34,6 +34,7 @@
   walker)
 
 (defn render [walker]
+  (q/background (params :background)) ; nicht in setup -> artefakte
   (q/stroke 0)
   (q/fill 175)
   (q/rect-mode processing.core.PConstants/CENTER)
@@ -45,8 +46,7 @@
       (do (dbg walker) (-> walker (walk) (render))))) ; TODO remove dbg
 
 (defn setup []
-  (q/frame-rate (params :frame-rate))
-  (q/background (params :background)))
+  (q/frame-rate (params :frame-rate)))
 
 (q/defsketch random-walk
   :title "random-walk"
