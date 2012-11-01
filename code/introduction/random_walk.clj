@@ -2,14 +2,6 @@
   "Random Walker (No Vectors)"
   (:require [quil.core :as q]))
 
-; TODO entfernen ?
-(defmacro dbg
-  "print debug-infos to console"
-  [x] 
-  `(let 
-     [x# ~x] 
-     (println "dbg:" '~x "=" x#) x#)) 
- 
 (def params 
   {:size [400 400]
    :background 0
@@ -31,19 +23,19 @@
     (swap! walker assoc 
         :x (q/constrain x 0 (dec (q/width)))
         :y (q/constrain y 0 (dec (q/height)))))
-  walker)
+  walker) 
 
 (defn render [walker]
-  (q/background (params :background)) ; nicht in setup -> artefakte
+  (q/background (params :background)) 
   (q/stroke 0)
   (q/fill 175)
   (q/rect-mode processing.core.PConstants/CENTER)
   (q/rect (:x @walker), (:y @walker), (params :rect-width), (params :rect-height)))
 
-(defn gen-draw-fn [walker] 
+(defn gen-draw-fn [] 
   "Run the walker object"
-    (fn []
-      (do (dbg walker) (-> walker (walk) (render))))) ; TODO remove dbg
+  (let [walker (make-walker)] ; create state
+    (fn [] (-> walker (walk) (render))))) ; and work with it 
 
 (defn setup []
   (q/frame-rate (params :frame-rate)))
@@ -51,5 +43,5 @@
 (q/defsketch random-walk
   :title "random-walk"
   :setup setup
-  :draw (gen-draw-fn (make-walker))
-  :size(params :size) )
+  :draw (gen-draw-fn)
+  :size (params :size))

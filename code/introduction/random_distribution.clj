@@ -2,14 +2,6 @@
   "visualize distribution of random numbers"
   (:require [quil.core :as q]))
 
-; TODO entfernen ?
-(defmacro dbg
-  "print debug-infos to console"
-  [x] 
-  `(let 
-     [x# ~x] 
-     (println "dbg:" '~x "=" x#) x#)) 
- 
 (def params 
   {:size [800 200]
    :background 0
@@ -23,30 +15,29 @@
 
 (defn render [random-counts]
   (q/background (params :background))
-  
-  ; Draw a rectangle to graph results
   (q/stroke 0)
   (q/stroke-weight 2)
   (q/fill 127)
 
-  ; Pick a random number and increase the count
   (let [rc-count (count @random-counts)]
+    ; Pick a random number and increase the count
     (let [index (int (q/random rc-count))]
       (swap! random-counts update-in [index] inc))
 
+    ; Draw a rectangle to graph results
     (let [w (/ (q/width) rc-count)]
-      (dotimes [x rc-count]
+      (dotimes [x rc-count] 
         (let [r-count (get @random-counts x)]
         (q/rect (* x w) (- (q/height) r-count) (dec w) r-count)))))
-  random-counts) ; make cascade-call possible
+  random-counts) 
 
-(defn gen-draw-fn [random-counts] 
+(defn gen-draw-fn [] 
   "gen function that renders the output"
-    (fn []
-      (do (dbg random-counts) (render random-counts)))) ; TODO remove dbg
+  (let [random-counts (make-random-counts)] ; create state
+    (fn [] (render random-counts)))) ; and work with it
 
 (q/defsketch random-walk
   :title "random-distribution"
   :setup setup
-  :draw (gen-draw-fn (make-random-counts))
+  :draw (gen-draw-fn)
   :size (params :size))
