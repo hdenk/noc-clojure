@@ -1,5 +1,5 @@
 (ns nature-of-code.random-distribution
-  "Random Walker (No Vectors)"
+  "visualize distribution of random numbers"
   (:require [quil.core :as q]))
 
 ; TODO entfernen ?
@@ -11,7 +11,7 @@
      (println "dbg:" '~x "=" x#) x#)) 
  
 (def params 
-  {:size [400 400]
+  {:size [800 200]
    :background 0
    :frame-rate 30})
 
@@ -37,10 +37,11 @@
     (let [w (/ (q/width) rc-count)]
       (dotimes [x rc-count]
         (let [r-count (get @random-counts x)]
-        (q/rect (* x w) (- (q/height) r-count) (dec w) r-count))))))
+        (q/rect (* x w) (- (q/height) r-count) (dec w) r-count)))))
+  random-counts) ; make cascade-call possible
 
 (defn gen-draw-fn [random-counts] 
-  "gen function that renders the outout"
+  "gen function that renders the output"
     (fn []
       (do (dbg random-counts) (render random-counts)))) ; TODO remove dbg
 
@@ -48,4 +49,4 @@
   :title "random-distribution"
   :setup setup
   :draw (gen-draw-fn (make-random-counts))
-  :size(params :size))
+  :size (params :size))
