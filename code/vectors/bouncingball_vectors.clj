@@ -2,13 +2,6 @@
   "Example 1-2: Bouncing Ball, with PVector!"
   (:require [quil.core :as q]))
 
-(defmacro dbg
-  "print debug-infos to console"
-  [x] 
-  `(let 
-     [x# ~x] 
-     (println "dbg:" '~x "=" x#) x#)) 
-
 (def params 
   {:size [200 200]
    :background 255
