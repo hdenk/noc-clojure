@@ -1,6 +1,7 @@
 (ns nature-of-code.bouncingball-vectors
   "Example 1-2: Bouncing Ball, with PVector!"
-  (:require [quil.core :as q]))
+  (:require [quil.core :as q])
+  (:import [processing.core PVector]))
 
 (def params 
   {:size [200 200]
@@ -13,8 +14,8 @@
    :speed-y 5})
 
 (defn make-ball []
-  (let [location (processing.core.PVector. (params :ball-x) (params :ball-y))
-        velocity (processing.core.PVector. (params :speed-x) (params :speed-y))]
+  (let [location (PVector. (params :ball-x) (params :ball-y))
+        velocity (PVector. (params :speed-x) (params :speed-y))]
     (atom { :location location :velocity velocity })))
 
 (defn setup []
@@ -31,7 +32,7 @@
         ball 
         update-in 
         [:velocity] 
-        #(processing.core.PVector. (* (.-x %) -1) (.-y %))))
+        #(PVector. (* (.-x %) -1) (.-y %))))
 
     (if (or 
           (> (.-y location) (q/height)) 
@@ -40,7 +41,7 @@
         ball 
         update-in 
         [:velocity] 
-        #(processing.core.PVector. (.-x %) (* (.-y %) -1))))))
+        #(PVector. (.-x %) (* (.-y %) -1))))))
 
 (defn- move [ball]
   (let [velocity (:velocity @ball)]
@@ -48,7 +49,7 @@
       ball 
       update-in 
       [:location] 
-      #(processing.core.PVector/add %1 %2) velocity)))
+      #(PVector/add %1 %2) velocity)))
 
 (defn render [ball]
   (q/no-stroke)
@@ -57,6 +58,7 @@
    
   (check-edges ball)
   (move ball)
+
   ; Display circle at ball location
   (q/stroke 0)
   (q/fill 175)
@@ -67,7 +69,7 @@
   (let [ball (make-ball)] ; create state
     (fn [] (render ball)))) ; and work with it
 
-(q/defsketch random-walk
+(q/defsketch bouncing-ball
   :title "Bouncing Ball with Vectors"
   :setup setup
   :draw (gen-draw-fn)
