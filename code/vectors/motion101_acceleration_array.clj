@@ -5,19 +5,11 @@
   (:require [quil.core :as q])
   (:import [processing.core PVector]))
 
-(defmacro dbg
-  "print debug-infos to console"
-  [x] 
-  `(let 
-     [x# ~x] 
-     (println "dbg:" '~x "=" x#) x#)) 
-
 (def params 
   {:size [800 200]
    :background 255
    :frame-rate 30
-   :mover-x 100
-   :mover-y 100
+   :mover-count 5
    :mover-rx 48
    :mover-ry 48
    :speed-x 0
@@ -27,7 +19,6 @@
 
 (defn make-mover []
   (let [
-        ;location (PVector. (params :mover-x) (params :mover-y))
         location (PVector. (int (rand (first (params :size)))) (int (rand (second (params :size))))) 
         velocity (PVector. (params :speed-x) (params :speed-y))]
     (atom { :location location :velocity velocity })))
@@ -72,7 +63,6 @@
   (update-location mover)) 
 
 (defn render [mover]
-  (dbg mover)
   (q/no-stroke)
   (q/fill 255 100)
   (q/rect 0 0 (q/width) (q/height))
@@ -87,12 +77,11 @@
 
 (defn gen-draw-fn [] 
   "gen function that renders the output"
-  (let [mover-seq [(make-mover) (make-mover)]] ; create state
-    (fn [] (doall (map render mover-seq)) nil))) ; and work with it
+  (let [mover-seq (repeatedly (params :mover-count) make-mover)] ; create state
+    (fn [] (reduce #(render %2) nil mover-seq)))) ; and work with it
 
 (q/defsketch motion101-acceleration
   :title "motion-controll by acceleration"
   :setup setup
   :draw (gen-draw-fn)
   :size (params :size))
-
