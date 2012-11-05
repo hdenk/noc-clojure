@@ -21,8 +21,8 @@
         x (+ (:x @walker) dx)
         y (+ (:y @walker) dy)]
     (swap! walker assoc 
-        :x (q/constrain x 0 (dec (q/width)))
-        :y (q/constrain y 0 (dec (q/height)))))
+           :x (q/constrain x 0 (dec (q/width)))
+           :y (q/constrain y 0 (dec (q/height)))))
   walker) 
 
 (defn render [walker]

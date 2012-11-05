@@ -55,7 +55,7 @@
   (q/no-stroke)
   (q/fill 255 10)
   (q/rect 0 0 (q/width) (q/height))
-   
+
   (check-edges ball)
   (move ball)
 

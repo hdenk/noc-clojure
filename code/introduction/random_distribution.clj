@@ -28,7 +28,7 @@
     (let [w (/ (q/width) rc-count)]
       (dotimes [x rc-count] 
         (let [r-count (get @random-counts x)]
-        (q/rect (* x w) (- (q/height) r-count) (dec w) r-count)))))
+          (q/rect (* x w) (- (q/height) r-count) (dec w) r-count)))))
   random-counts) 
 
 (defn gen-draw-fn [] 

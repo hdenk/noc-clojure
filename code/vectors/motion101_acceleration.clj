@@ -32,21 +32,21 @@
   (swap! 
     mover 
     update-in 
-      [:velocity] 
-      #(let [velocity (PVector/add %1 %2)] 
-        ; Limit the velocity by topspeed
-        (.limit velocity (params :topspeed)) ; Seiteneffekt !
-        velocity)
-      acceleration)
+    [:velocity] 
+    #(let [velocity (PVector/add %1 %2)] 
+       ; Limit the velocity by topspeed
+       (.limit velocity (params :topspeed)) ; Seiteneffekt !
+       velocity)
+    acceleration)
   mover)
 
 (defn- update-location [mover]
   (swap! 
     mover 
     update-in 
-      [:location] 
-      #(PVector/add %1 %2) 
-      (:velocity @mover))
+    [:location] 
+    #(PVector/add %1 %2) 
+    (:velocity @mover))
   mover)
 
 (defn- move-to [mover x y]
@@ -57,7 +57,7 @@
         target-nv (do (.normalize target-v) target-v) ; Seiteneffekt !
         ; Set magnitude of acceleration
         acceleration (PVector/mult target-nv (float (params :acceleration)))]
-   (update-velocity mover acceleration))
+    (update-velocity mover acceleration))
 
   ; Location changes by velocity
   (update-location mover)) 
