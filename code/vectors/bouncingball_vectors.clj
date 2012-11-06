@@ -11,7 +11,8 @@
    :ball-y 100
    :ball-r 16
    :speed-x 2.5
-   :speed-y 5})
+   :speed-y 5
+   :damping-factor -0.9})
 
 (defn make-ball []
   (let [location (PVector. (params :ball-x) (params :ball-y))
@@ -24,24 +25,26 @@
   (q/smooth))
 
 (defn- check-edges [ball]
-  (let [location (:location @ball)]
+  (let [location (:location @ball)
+        velocity (:velocity @ball)]
     (if (or 
-          (> (.-x location) (q/width)) 
-          (< (.-x location) 0))
+          (and (> (.-x location) (q/width)) (> (.-x velocity) 0)) 
+          (and (< (.-x location) 0) (< (.-x velocity) 0)))
       (swap! 
         ball 
         update-in 
         [:velocity] 
-        #(PVector. (* (.-x %) -1) (.-y %))))
+        #(PVector. (* (.-x %) (params :damping-factor)) (.-y %))))
 
     (if (or 
-          (> (.-y location) (q/height)) 
-          (< (.-y location) 0))
+          (and (> (.-y location) (q/height)) (> (.-y velocity) 0)) 
+          (and (< (.-y location) 0) (< (.-y velocity) 0)))
       (swap! 
         ball 
         update-in 
         [:velocity] 
-        #(PVector. (.-x %) (* (.-y %) -1))))))
+        #(PVector. (.-x %) (* (.-y %) (params :damping-factor))))))
+  ball)
 
 (defn- move [ball]
   (let [velocity (:velocity @ball)]
@@ -49,7 +52,8 @@
       ball 
       update-in 
       [:location] 
-      #(PVector/add %1 %2) velocity)))
+      #(PVector/add %1 %2) velocity))
+  ball)
 
 (defn render [ball]
   (q/no-stroke)
