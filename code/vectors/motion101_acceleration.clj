@@ -51,8 +51,7 @@
 
 (defn- move-to [mover x y]
   ; Velocity changes according to acceleration
-  (let [
-        ; Compute a vector that points from mover to target
+  (let [; Compute a vector that points from mover to target
         target-v (PVector/sub (PVector. x y) (:location @mover))
         target-nv (do (.normalize target-v) target-v) ; Seiteneffekt !
         ; Set magnitude of acceleration
