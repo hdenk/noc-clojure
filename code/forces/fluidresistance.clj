@@ -90,7 +90,11 @@
   (q/stroke 0)
   (q/stroke-weight 2)
   (q/fill 127)
-  (q/ellipse (.-x (:location @mover)) (.-y (:location @mover)) (params :mover-rx) (params :mover-ry)))
+  (q/ellipse (.-x (:location @mover)) (.-y (:location @mover)) (params :mover-rx) (params :mover-ry))
+
+  (q/fill 0)
+  (q/text "click mouse to reset" 10 30))
+
 
 (defn gen-draw-fn [] 
   "gen function that renders the output"
