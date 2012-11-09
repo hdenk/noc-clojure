@@ -25,11 +25,11 @@
         velocity (PVector. (params :speed-x) (params :speed-y))]
     (atom { :location location :velocity velocity })))
 
-(defn reset-mover! [mover]
+(defn reset-mover [mover]
   (reset! mover (deref (make-mover))))
 
-(defn reset-movers! [mover-seq]
-  (reduce #(reset-mover! %2) nil mover-seq))
+(defn reset-movers [mover-seq]
+  (dorun (map #(reset-mover %) mover-seq))) ; dorun returns nil
 
 (defn setup []
   (q/frame-rate (params :frame-rate))
@@ -91,13 +91,12 @@
 
 (defn gen-draw-fn [] 
   "gen function that renders the output"
-  ; create state 
   (let [mover-seq (repeatedly (params :mover-count) make-mover)]
-    (fn [] 
+    (fn draw[] 
       (when *reset-movers*
-        (reset-movers! mover-seq) ; Seiteneffekt !
+        (reset-movers mover-seq) ; Seiteneffekt !
         (alter-var-root (var *reset-movers*) (fn [_] false)))  
-      (reduce #(render %2) nil mover-seq)))) ; and work with it
+      (dorun (map #(render %) mover-seq))))) ; dorun returns nil
 
 (q/defsketch fluidresistance
   :title "Bodies experience gravity and fluid resistance"
