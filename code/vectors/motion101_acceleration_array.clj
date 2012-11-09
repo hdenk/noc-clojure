@@ -17,18 +17,32 @@
    :topspeed 5
    :acceleration 0.2})
 
+(def ^:dynamic *reset-movers* false)
+
 (defn make-mover []
   (let [
         location (PVector. (int (rand (first (params :size)))) (int (rand (second (params :size))))) 
         velocity (PVector. (params :speed-x) (params :speed-y))]
     (atom { :location location :velocity velocity })))
 
+(defn reset-mover [mover]
+  (reset! mover (deref (make-mover))))
+
+(defn reset-movers [mover-seq]
+  (dorun (map #(reset-mover %) mover-seq))) ; dorun returns nil
+
 (defn setup []
   (q/frame-rate (params :frame-rate))
   (q/background (params :background))
   (q/smooth))
 
-(defn- update-velocity [mover acceleration]
+(defn reset []
+  (alter-var-root (var *reset-movers*) (fn [_] true)))
+
+(defn mouse-pressed []
+  (reset))
+
+(defn update-mover-velocity [mover acceleration]
   (swap! 
     mover 
     update-in 
@@ -40,7 +54,7 @@
     acceleration)
   mover)
 
-(defn- update-location [mover]
+(defn update-mover-location [mover]
   (swap! 
     mover 
     update-in 
@@ -49,7 +63,7 @@
     (:velocity @mover))
   mover)
 
-(defn- move-to [mover x y]
+(defn update-mover [mover x y]
   ; Velocity changes according to acceleration
   (let [
         ; Compute a vector that points from mover to target
@@ -57,17 +71,20 @@
         target-nv (do (.normalize target-v) target-v) ; Seiteneffekt !
         ; Set magnitude of acceleration
         acceleration (PVector/mult target-nv (float (params :acceleration)))]
-    (update-velocity mover acceleration))
+    (update-mover-velocity mover acceleration))
 
   ; Location changes by velocity
-  (update-location mover)) 
+  (update-mover-location mover)
+  mover) 
 
+; update and render single mover this gives movers
+; different alpha transparency
 (defn render [mover]
   (q/no-stroke)
-  (q/fill 255 100)
+  (q/fill 255 100) ; fill with alpha transparency
   (q/rect 0 0 (q/width) (q/height))
 
-  (move-to mover (q/mouse-x) (q/mouse-y))
+  (update-mover mover (q/mouse-x) (q/mouse-y))
 
   ; Display mover at its location
   (q/stroke 0)
@@ -77,11 +94,17 @@
 
 (defn gen-draw-fn [] 
   "gen function that renders the output"
-  (let [mover-seq (repeatedly (params :mover-count) make-mover)] ; create state
-    (fn [] (reduce #(render %2) nil mover-seq)))) ; and work with it
+  (let [mover-seq (repeatedly (params :mover-count) make-mover)]
+    (fn draw[] 
+      (when *reset-movers*
+          (reset-movers mover-seq)
+          (alter-var-root (var *reset-movers*) (fn [_] false)))
+      (dorun (map render mover-seq))))) ; dorun returns nil
 
-(q/defsketch motion101-acceleration
-  :title "motion-controll by acceleration"
+(q/defsketch fluidresistance
+  :title "Bodies experience gravity and fluid resistance"
   :setup setup
   :draw (gen-draw-fn)
-  :size (params :size))
+  :size (params :size)
+  :mouse-pressed mouse-pressed)
+
