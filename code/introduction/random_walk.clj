@@ -25,6 +25,9 @@
            :y (q/constrain y 0 (dec (q/height)))))
   walker) 
 
+(defn setup []
+  (q/frame-rate (params :frame-rate)))
+
 (defn render [walker]
   (q/background (params :background)) 
   (q/stroke 0)
@@ -36,9 +39,6 @@
   "Run the walker object"
   (let [walker (make-walker)] ; create state
     (fn [] (-> walker (walk) (render))))) ; and work with it 
-
-(defn setup []
-  (q/frame-rate (params :frame-rate)))
 
 (q/defsketch random-walk
   :title "random-walk"
