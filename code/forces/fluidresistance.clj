@@ -42,7 +42,7 @@
 (defn mouse-pressed []
   (reset))
 
-(defn- update-velocity [mover acceleration]
+(defn update-mover-velocity [mover acceleration]
   (swap! 
     mover 
     update-in 
@@ -54,7 +54,7 @@
     acceleration)
   mover)
 
-(defn- update-location [mover]
+(defn update-mover-location [mover]
   (swap! 
     mover 
     update-in 
@@ -63,7 +63,7 @@
     (:velocity @mover))
   mover)
 
-(defn- move-to [mover x y]
+(defn update-mover [mover x y]
   ; Velocity changes according to acceleration
   (let [
         ; Compute a vector that points from mover to target
@@ -71,17 +71,20 @@
         target-nv (do (.normalize target-v) target-v) ; Seiteneffekt !
         ; Set magnitude of acceleration
         acceleration (PVector/mult target-nv (float (params :acceleration)))]
-    (update-velocity mover acceleration))
+    (update-mover-velocity mover acceleration))
 
   ; Location changes by velocity
-  (update-location mover)) 
+  (update-mover-location mover)
+  mover) 
 
+; update and render single mover this gives movers
+; different alpha transparency
 (defn render [mover]
   (q/no-stroke)
-  (q/fill 255 100)
+  (q/fill 255 100) ; fill with alpha transparency
   (q/rect 0 0 (q/width) (q/height))
 
-  (move-to mover (q/mouse-x) (q/mouse-y))
+  (update-mover mover (q/mouse-x) (q/mouse-y))
 
   ; Display mover at its location
   (q/stroke 0)
@@ -94,9 +97,9 @@
   (let [mover-seq (repeatedly (params :mover-count) make-mover)]
     (fn draw[] 
       (when *reset-movers*
-        (reset-movers mover-seq) ; Seiteneffekt !
-        (alter-var-root (var *reset-movers*) (fn [_] false)))  
-      (dorun (map #(render %) mover-seq))))) ; dorun returns nil
+          (reset-movers mover-seq)
+          (alter-var-root (var *reset-movers*) (fn [_] false)))
+      (dorun (map render mover-seq))))) ; dorun returns nil
 
 (q/defsketch fluidresistance
   :title "Bodies experience gravity and fluid resistance"
