@@ -1,4 +1,4 @@
-(defproject The-Nature-of-Code-in-Cljoure "0.1.0-SNAPSHOT"
+(defproject noc-clojure "0.1.0-SNAPSHOT"
   :description "Implement samples from The Nature of Code in Clojure"
   :url "http://natureofcode.com/"
   :license {:name "Eclipse Public License"
