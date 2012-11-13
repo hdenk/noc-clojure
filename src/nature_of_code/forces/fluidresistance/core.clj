@@ -2,112 +2,106 @@
   "Demonstration of multiple force acting on bodies (Mover class)
    Bodies experience gravity continuously
    Bodies experience fluid resistance when in water"
-  (:require [quil.core :as q])
+  (:require [quil.core :as q]
+            [nature-of-code.forces.fluidresistance.scene :as scene]
+            [nature-of-code.forces.fluidresistance.mover :as mover])
   (:import [processing.core PVector]))
+
+(defmacro dbg
+  "print debug-infos to console"
+  [x] 
+  `(let 
+     [x# ~x] 
+     (println "dbg:" '~x "=" x#) x#)) 
 
 (def params 
   {:size [800 200]
    :background 255
    :frame-rate 30
    :mover-count 5
-   :mover-rx 48
-   :mover-ry 48
+   :mover-r 48
    :speed-x 0
    :speed-y 0
-   :topspeed 5
+   :topspeed 5 
    :acceleration 0.2})
 
-(def ^:dynamic *reset-movers* false)
+(def movers
+  (atom
+    (map (fn [id]
+           {:id id
+            :location (PVector. (rand-int (first (params :size))) (rand-int (second (params :size)))) 
+            :velocity (PVector. (params :speed-x) (params :speed-y))})
+         (range (params :mover-count)))))
 
-(defn make-mover []
-  (let [
-        location (PVector. (int (rand (first (params :size)))) (int (rand (second (params :size))))) 
-        velocity (PVector. (params :speed-x) (params :speed-y))]
-    (atom { :location location :velocity velocity })))
-
-(defn reset-mover [mover]
-  (reset! mover (deref (make-mover))))
-
-(defn reset-movers [mover-seq]
-  (dorun (map #(reset-mover %) mover-seq))) ; dorun returns nil
+(def scene-graph
+  (let [mover-node
+        (scene/->GraphNode
+          []
+          mover
+          (fn [location]
+            (q/ellipse (.-x location) (.-y location) (params :mover-r) (params :mover-r))))]
+    mover-node))
 
 (defn setup []
   (q/frame-rate (params :frame-rate))
   (q/background (params :background))
   (q/smooth))
 
-(defn reset []
-  (alter-var-root (var *reset-movers*) (fn [_] true)))
+(defn calc-acceleration 
+  "Compute acceleration-vector that points from source to target
+  set magnitude of acceleration in params"
+  [source-location target-location]
+  (let [ target-v (PVector/sub target-location source-location)
+         target-nv (do (.normalize target-v) target-v) ; Seiteneffekt !
+         ; Set magnitude of acceleration
+         acceleration (PVector/mult target-nv (float (params :acceleration)))]
+    acceleration))
 
-(defn mouse-pressed []
-  (reset))
+(defn calc-velocity
+  "Compute new velocity-vector by adding acceleration
+   and constrain with topspeed"
+  [velocity acceleration]
+  (let [a-velocity (PVector/add velocity acceleration)
+        l-velocity (do (.limit a-velocity (float (params :topspeed))) a-velocity)]
+    l-velocity)) 
+        
+(defn update-mover [mover target-location]
+  (let [ 
+        m-id (:id mover)
+        m-location (:location mover)
+        m-velocity (:velocity mover)
+        ; Location changes by velocity
+        next-location (PVector/add m-location m-velocity)
+        ; Velocity changes by acceleration
+        acceleration (calc-acceleration m-location target-location)
+        next-velocity (calc-velocity m-velocity acceleration)]
+    { :id m-id :location next-location :velocity next-velocity }))
 
-(defn update-mover-velocity [mover acceleration]
-  (swap! 
-    mover 
-    update-in 
-    [:velocity] 
-    #(let [velocity (PVector/add %1 %2)] 
-       ; Limit the velocity by topspeed
-       (.limit velocity (params :topspeed)) ; Seiteneffekt !
-       velocity)
-    acceleration)
-  mover)
+(defn update-movers [movers target-location] 
+  (map #(update-mover % target-location) movers))
 
-(defn update-mover-location [mover]
-  (swap! 
-    mover 
-    update-in 
-    [:location] 
-    #(PVector/add %1 %2) 
-    (:velocity @mover))
-  mover)
-
-(defn update-mover [mover x y]
-  ; Velocity changes according to acceleration
-  (let [
-        ; Compute a vector that points from mover to target
-        target-v (PVector/sub (PVector. x y) (:location @mover))
-        target-nv (do (.normalize target-v) target-v) ; Seiteneffekt !
-        ; Set magnitude of acceleration
-        acceleration (PVector/mult target-nv (float (params :acceleration)))]
-    (update-mover-velocity mover acceleration))
-
-  ; Location changes by velocity
-  (update-mover-location mover)
-  mover) 
-
-; update and render single mover this gives movers
-; different alpha transparency
-(defn render [mover]
+(defn draw []
+  ; draw Background
   (q/no-stroke)
-  (q/fill 255 100) ; fill with alpha transparency
+  (q/fill 255) 
   (q/rect 0 0 (q/width) (q/height))
 
-  (update-mover mover (q/mouse-x) (q/mouse-y))
-
-  ; Display mover at its location
+  ; draw movers
   (q/stroke 0)
   (q/stroke-weight 2)
-  (q/fill 127)
-  (q/ellipse (.-x (:location @mover)) (.-y (:location @mover)) (params :mover-rx) (params :mover-ry))
+  (q/fill (q/random 100 200))
+  
+  (dorun (map #(scene/draw scene-graph (:location %)) @movers))
 
+  ; draw hint(s)
   (q/fill 0)
-  (q/text "click mouse to reset" 10 30))
+  (q/text "click mouse to reset" 10 30)
 
-
-(defn gen-draw-fn [] 
-  "gen function that renders the output"
-  (let [mover-seq (repeatedly (params :mover-count) make-mover)]
-    (fn draw[] 
-      (when *reset-movers*
-          (reset-movers mover-seq)
-          (alter-var-root (var *reset-movers*) (fn [_] false)))
-      (dorun (map render mover-seq))))) ; dorun returns nil
+  ; update movers to next state
+  (swap! movers #(update-movers % (PVector. (q/mouse-x) (q/mouse-y))))) 
 
 (q/defsketch fluidresistance
   :title "Bodies experience gravity and fluid resistance"
   :setup setup
-  :draw (gen-draw-fn)
-  :size (params :size)
-  :mouse-pressed mouse-pressed)
+  :draw draw
+  :size (params :size))
