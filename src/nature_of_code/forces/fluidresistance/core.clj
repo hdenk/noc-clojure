@@ -34,12 +34,11 @@
          (range (params :mover-count)))))
 
 (def scene-graph
-  (let [mover-node
+  (let [mover-node (mover/make-mover-node)]
         (scene/->GraphNode
           []
-          mover
-          (fn [location]
-            (q/ellipse (.-x location) (.-y location) (params :mover-r) (params :mover-r))))]
+          identity
+          mover/draw)]
     mover-node))
 
 (defn setup []
