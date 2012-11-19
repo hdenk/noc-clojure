@@ -5,13 +5,6 @@
    (:require [quil.core :as q])
    (:import [processing.core PVector]))
 
-(defmacro dbg
-  "print debug-infos to console"
-  [x] 
-  `(let 
-     [x# ~x] 
-     (println "dbg:" '~x "=" x#) x#)) 
-
 ;;;
 ;;; Mover
 ;;;
@@ -101,29 +94,32 @@
   {:size [600 400]
    :background 255
    :frame-rate 30
-   :mover-count 3 
+   :mover-count 5 
+   :mass-classes 3 
    :initial-speed-x 0
    :initial-speed-y 0
    :initial-acceleration-x 0
-   :initial-acceleration-y 0
+   :initial-acceleration-y 0 
+   :drag-coefficient 0.2
+   :mover-color 127
    :fluid-color 211}) 
 
 (defn make-fluid []
   (map->Fluid 
     {:id "fluid1" 
      :x 0 :y (* (second (params :size)) 0.75) :width (first (params :size)) :height (second (params :size))  
-     :color 127 :drag-coefficient 1.0}))
+     :color (params :fluid-color) :drag-coefficient (params :drag-coefficient)}))
 
 (defn make-movers []
   (map 
     (fn [id]
       (map->Mover 
         {:id (str "mover" id)
-         :mass (inc (rand-int 3)) ; TODO            
+         :mass (inc (rand-int (params :mass-classes)))              
          :location (PVector. (rand-int (first (params :size))) (/ (rand-int (second (params :size))) 2)) 
          :velocity (PVector. (params :initial-speed-x) (params :initial-speed-y))
          :acceleration (PVector. (params :initial-acceleration-x) (params :initial-acceleration-y))
-         :color (params :fluid-color)}))
+         :color (params :mover-color)}))
     (range (params :mover-count))))
 
 (def view-model
@@ -146,10 +142,11 @@
 
 (defn movers-next-state [movers]
   (map 
-    (comp ; comp wendet fns von rechts nach links an !
-      next-state 
-      apply-drag-force 
-      apply-gravity) 
+    #(->
+       % 
+       (apply-gravity) 
+       (apply-drag-force) 
+       (next-state)) 
     movers)) 
 
 (defn setup []
