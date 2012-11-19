@@ -145,14 +145,24 @@
       mover)))
 
 (defn movers-next-state [movers]
-  (map (comp next-state apply-drag-force apply-gravity) movers)) ; comp wendet von rechts nach links an
+  (map 
+    (comp ; comp wendet fns von rechts nach links an !
+      next-state 
+      apply-drag-force 
+      apply-gravity) 
+    movers)) 
 
 (defn setup []
   (q/frame-rate (params :frame-rate))
   (q/smooth))
 
 (defn mouse-pressed []
-  (swap! view-model #(update-in % [:movers] (constantly (make-movers)))))
+  (swap! 
+    view-model 
+    #(update-in 
+       % 
+       [:movers] 
+       (constantly (make-movers)))))
 
 (defn draw []
   ; draw Background
@@ -171,7 +181,12 @@
   (q/text "click mouse to reset" 10 30)
 
   ; update view-model to next state
-  (swap! view-model #(update-in % [:movers] movers-next-state)))
+  (swap! 
+    view-model 
+    #(update-in 
+       % 
+       [:movers] 
+       movers-next-state)))
 
 (q/defsketch fluidresistance
   :title "Bodies experience gravity and fluid resistance"
