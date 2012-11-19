@@ -56,12 +56,12 @@
 ;;;
 
 (defprotocol Permeable
-  (contains? [this mover] "check if mover is inside of the aetheral object")
+  (contains-mover? [this mover] "check if mover is inside of the aetheral object")
   (drag-force [this obj] "calcs the drag-force that affects the mover inside of the aetheral object"))
 
 (defrecord Fluid [id x y width height color drag-coefficient]
   Permeable 
-  (contains? 
+  (contains-mover? 
     [this {mover-location :location}]
     (let [mover-x (.-x mover-location)
           mover-y (.-y mover-location)]
@@ -135,7 +135,7 @@
 (defn apply-drag-force [mover]
   (let [fluid (@view-model :fluid)]
     ; Is the Mover in the liquid ?
-    (if (contains? fluid mover)
+    (if (contains-mover? fluid mover)
       (let [drag-force (drag-force fluid mover)]
         (apply-force mover drag-force))
       mover)))
