@@ -32,27 +32,27 @@
 
 (deftest test-fluid
   (testing 
-    "contains?"
+    "contains-mover?"
     (is 
       (= false
          (let [f (Fluid. "f1" 0 0 600 400 127 1.0)
                m (Mover. "m1" 2.0 (PVector. 0 0) (PVector. 0.0 0.1) (PVector. 0 0.1) 127)]
-           (fluid-resistance/contains? f m))))
+           (fluid-resistance/contains-mover? f m))))
     (is 
       (= true
          (let [f (Fluid. "f1" 0 0  600 400 127 1.0)
                m (Mover. "m1" 2.0 (PVector. 1 1) (PVector. 0.0 0.1) (PVector. 0 0.1) 127)]
-           (fluid-resistance/contains? f m))))
+           (fluid-resistance/contains-mover? f m))))
     (is 
       (= true
          (let [f (Fluid. "f1" 0 0 600 400 127 1.0)
                m (Mover. "m1" 2.0 (PVector. 599 399) (PVector. 0.0 0.1) (PVector. 0 0.1) 127)]
-           (fluid-resistance/contains? f m))))
+           (fluid-resistance/contains-mover? f m))))
     (is 
       (= false
          (let [f (Fluid. "f1" 0 0 600 400 127 1.0)
                m (Mover. "m1" 2.0 (PVector. 600 400) (PVector. 0.0 0.1) (PVector. 0 0.1) 127)]
-           (fluid-resistance/contains? f m)))))
+           (fluid-resistance/contains-mover? f m)))))
   (testing 
     "drag-force"
     (is 
