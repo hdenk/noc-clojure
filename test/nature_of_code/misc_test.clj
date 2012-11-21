@@ -1,4 +1,4 @@
-(ns nature-of-code.core-test
+(ns nature-of-code.misc-test
   (:use clojure.test nature-of-code.test-utils)
   (:require [quil.core :as q])
   (:import [processing.core PVector]))
