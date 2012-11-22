@@ -6,6 +6,9 @@
   {:size [600 400]
    :background 255
    :frame-rate 30
+   :lifespan 255
+   :lifespan-dec-rate 2
+   :particle-r 16
    :particle-color 127}) 
 
 (defn size-x []
@@ -36,7 +39,7 @@
     (let [next-location (PVector/add location velocity)
           next-velocity (PVector/add velocity acceleration)
           next-acceleration (PVector/mult acceleration (float 0))
-          next-lifespan (- lifespan 2.0)]
+          next-lifespan (- lifespan (params :lifespan-dec-rate))]
       (assoc this :location next-location :velocity next-velocity :acceleration next-acceleration :lifespan next-lifespan)))
 
   Massiv
@@ -55,30 +58,24 @@
     (q/stroke 0 lifespan)
     (q/stroke-weight 2)
     (q/fill (params :particle-color) lifespan)
-    (q/ellipse (.-x location) (.-y location) 12 12)))
+    (q/ellipse (.-x location) (.-y location) (params :particle-r) (params :particle-r))))
 
 (defn gen-particle 
   [& {:keys [id mass location velocity acceleration lifespan] 
       :or {id "px" mass 0 location (PVector. 0 0) velocity (PVector. 0 0) acceleration (PVector. 0 0) lifespan 0}}] 
-  (map->Particle 
-    {:id id 
-     :mass mass 
-     :location location 
-     :velocity velocity 
-     :acceleration acceleration 
-     :lifespan lifespan})) 
+  (Particle. id mass location velocity acceleration lifespan)) 
 
 ;;
 ;; ParticleSystem
 ;;
 
-(defn particles-next-state [particles]
+(defn next-particles-state [particles]
   (map next-state particles))
 
 (defn add-particle [particles origin]
   (conj 
     particles 
-    (gen-particle :id (str "p" (count particles)) :mass 1.0 :location origin :velocity (PVector. (q/random -1.0 1.0) (q/random -2.0 0)) :lifespan 255)))
+    (gen-particle :id (str "p" (count particles)) :mass 1.0 :location origin :velocity (PVector. (q/random -1.0 1.0) (q/random -2.0 0)) :lifespan (params :lifespan))))
 
 (defn remove-expired [particles]
   (remove expired? particles)) 
@@ -86,9 +83,9 @@
 (defrecord ParticleSystem [origin particles]
   Stateful
   (next-state [this]
-    (let [next-particles 
+    (let [ next-particles 
           (-> particles 
-            (particles-next-state) 
+            (next-particles-state) 
             (add-particle origin) 
             (remove-expired))]
       (ParticleSystem. origin next-particles))) 
@@ -102,7 +99,7 @@
   (draw [this]
     (dorun (map #(draw %) particles))))
 ;;
-;; Main
+;; Sketch
 ;;
 
 (def particle-system (atom (map->ParticleSystem {:origin (PVector. (/ (size-x) 2) (- (size-y) (* (size-y) 0.75))) :particles []})))

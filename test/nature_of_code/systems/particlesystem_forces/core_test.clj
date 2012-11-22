@@ -2,7 +2,6 @@
   (:use clojure.test)
   (:require 
     [quil.core :as q]
-    [nature-of-code.test-utils :as test-utils]
     [nature-of-code.systems.particlesystem-forces.core :as ps])
   (:import 
     [processing.core PVector]
@@ -11,13 +10,7 @@
 (defn gen-particle 
   [& {:keys [id mass location velocity acceleration lifespan] 
       :or {id "px" mass 1.0 location (PVector. 0 0) velocity (PVector. 0 0) acceleration (PVector. 0 0) lifespan 0}}] 
-  (ps/map->Particle 
-    {:id id 
-     :mass mass 
-     :location location 
-     :velocity velocity 
-     :acceleration acceleration 
-     :lifespan lifespan})) 
+  (Particle. id mass location velocity acceleration lifespan)) 
 
 (deftest test-particle
   (testing 
