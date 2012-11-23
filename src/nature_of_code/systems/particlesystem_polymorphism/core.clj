@@ -33,43 +33,82 @@
 (defprotocol Drawable
   (draw [this] "draw the drawable object to an output-device"))
 
-(def defaults
-  {:method-one (fn [x y] nil)
-   :method-two (fn [] nil)})
-
-(defrecord Particle [id mass location velocity acceleration lifespan])
-
-(extend-type Particle
-  Stateful  
-  (next-state [this]
+(def particle-next-state
+  {:next-state (fn [this] 
     (let [next-location (PVector/add (:location this) (:velocity this))
           next-velocity (PVector/add (:velocity this) (:acceleration this))
           next-acceleration (PVector/mult (:acceleration this) (float 0))
           next-lifespan (- (:lifespan this) (params :lifespan-dec-rate))]
-      (assoc this :location next-location :velocity next-velocity :acceleration next-acceleration :lifespan next-lifespan)))
+      (assoc this :location next-location :velocity next-velocity :acceleration next-acceleration :lifespan next-lifespan)))})
 
-  Massiv
-  (apply-force [this force] 
+(def particle-apply-force
+  {:apply-force (fn [this force] 
     (let [f (.get force)
           mf (PVector/div f (float (:mass this)))
           next-acceleration (PVector/add (:acceleration this) mf)]
-      (assoc this :acceleration next-acceleration)))
+      (assoc this :acceleration next-acceleration)))})
 
-  Expirable
-  (expired? [this] 
-    (< (:lifespan this) 0.0))
+(def particle-expired?
+  {:expired? (fn [this] 
+    (< (:lifespan this) 0.0))})
 
-  Drawable
-  (draw [this]
+(def circular-particle-draw
+  {:draw (fn [this] 
     (q/stroke 0 (:lifespan this))
     (q/stroke-weight 2)
     (q/fill (params :particle-color) (:lifespan this))
-    (q/ellipse (.-x (:location this)) (.-y (:location this)) (params :particle-r) (params :particle-r))))
+    (q/ellipse (.-x (:location this)) (.-y (:location this)) (params :particle-r) (params :particle-r)))})
+
+(def squared-particle-draw
+  {:draw (fn [this]
+    (q/stroke 0 (:lifespan this))
+    (q/stroke-weight 2)
+    (q/fill (params :particle-color) (:lifespan this))
+    (q/rect-mode :center)
+    (q/push-matrix)
+    (q/translate (.-x (:location this)) (.-y (:location this)))
+    (let [theta (q/map-range (.-x (:location this)) 0 (size-x) 0 (* Math/PI 2))]
+      (q/rotate theta))
+    (q/rect 0 0 12 12) ; TODO 12 -> params
+    (q/pop-matrix))})
+
+(defrecord CircularConfetti [id mass location velocity acceleration lifespan])
+
+(extend CircularConfetti
+  Stateful 
+  particle-next-state
+
+  Massiv
+  particle-apply-force
+  
+  Expirable
+  particle-expired?
+
+  Drawable
+  circular-particle-draw)
+
+(defrecord SquaredConfetti [id mass location velocity acceleration lifespan])
+
+(extend SquaredConfetti
+  Stateful 
+  particle-next-state
+
+  Massiv
+  particle-apply-force
+  
+  Expirable
+  particle-expired?
+
+  Drawable
+  squared-particle-draw)
 
 (defn gen-particle 
   [& {:keys [id mass location velocity acceleration lifespan] 
       :or {id "px" mass 0 location (PVector. 0 0) velocity (PVector. 0 0) acceleration (PVector. 0 0) lifespan 0}}] 
-  (Particle. id mass location velocity acceleration lifespan)) 
+  (if (> (rand 1) 0.5)
+    (CircularConfetti. id mass location velocity acceleration lifespan)
+    (SquaredConfetti. id mass location velocity acceleration lifespan)))
+     
 
 ;;
 ;; ParticleSystem
