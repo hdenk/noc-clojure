@@ -5,12 +5,12 @@
     [nature-of-code.systems.particlesystem-polymorphism.core :as ps])
   (:import 
     [processing.core PVector]
-    [nature_of_code.systems.particlesystem_polymorphism.core Particle]))
+    [nature_of_code.systems.particlesystem_polymorphism.core CircularConfetti]))
 
 (defn gen-particle 
   [& {:keys [id mass location velocity acceleration lifespan] 
       :or {id "px" mass 1.0 location (PVector. 0 0) velocity (PVector. 0 0) acceleration (PVector. 0 0) lifespan 0}}] 
-  (Particle. id mass location velocity acceleration lifespan)) 
+  (CircularConfetti. id mass location velocity acceleration lifespan)) 
 
 (deftest test-particle
   (testing 
