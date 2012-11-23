@@ -28,7 +28,7 @@
 (defprotocol Massiv
   (apply-force [this force] "apply force to the massive object"))
 
-(defprotocol TargetAware
+(defprotocol TargetOriented
   (seek [this target] "steer towards the target object by applying force"))
 
 (defprotocol Drawable
@@ -50,7 +50,7 @@
           next-acceleration (PVector/add acceleration mf)]
       (assoc this :acceleration next-acceleration)))
 
-  TargetAware
+  TargetOriented
   (seek [this target]
     (let [desired (PVector/sub target location)]
       ; Normalize desired and scale to maximum speed

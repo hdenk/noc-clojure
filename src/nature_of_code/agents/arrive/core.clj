@@ -29,7 +29,7 @@
 (defprotocol Massiv
   (apply-force [this force] "apply force to the massive object"))
 
-(defprotocol TargetAware
+(defprotocol TargetOriented
   (arrive [this target] "steer towards the target object by applying force"))
 
 (defprotocol Drawable
@@ -51,7 +51,7 @@
           next-acceleration (PVector/add acceleration mf)]
       (assoc this :acceleration next-acceleration)))
 
-  TargetAware
+  TargetOriented
   (arrive [this target]
     (let [desired (PVector/sub target location)
           mag-desired (.mag desired)]
@@ -129,4 +129,3 @@
   :setup setup
   :draw draw
   :size (params :size))
-
