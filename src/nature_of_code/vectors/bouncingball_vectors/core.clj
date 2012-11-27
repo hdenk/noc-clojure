@@ -14,7 +14,7 @@
    :speed-y 5
    :damping-factor -0.9})
 
-(defn make-ball []
+(def ball
   (let [location (PVector. (params :ball-x) (params :ball-y))
         velocity (PVector. (params :speed-x) (params :speed-y))]
     (atom { :location location :velocity velocity })))
@@ -24,7 +24,7 @@
   (q/background (params :background))
   (q/smooth))
 
-(defn- check-edges [ball]
+(defn check-edges [ball]
   (let [location (:location @ball)
         velocity (:velocity @ball)]
     (if (or 
@@ -46,7 +46,7 @@
         #(PVector. (.-x %) (* (.-y %) (params :damping-factor))))))
   ball)
 
-(defn- move [ball]
+(defn move [ball]
   (let [velocity (:velocity @ball)]
     (swap! 
       ball 
@@ -55,7 +55,7 @@
       #(PVector/add %1 %2) velocity))
   ball)
 
-(defn render [ball]
+(defn draw []
   (q/no-stroke)
   (q/fill 255 10)
   (q/rect 0 0 (q/width) (q/height))
@@ -68,14 +68,9 @@
   (q/fill 175)
   (q/ellipse (.-x (:location @ball)) (.-y (:location @ball)) (params :ball-r) (params :ball-r)))
 
-(defn gen-draw-fn [] 
-  "gen function that renders the output"
-  (let [ball (make-ball)] ; create state
-    (fn [] (render ball)))) ; and work with it
-
 (q/defsketch bouncing-ball
   :title "Bouncing Ball with Vectors"
   :setup setup
-  :draw (gen-draw-fn)
+  :draw draw
   :size (params :size))
 

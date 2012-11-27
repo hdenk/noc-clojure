@@ -7,13 +7,13 @@
    :background 0
    :frame-rate 30})
 
-(defn make-random-counts []
+(def random-counts 
   (atom (vec (repeat 5 (float 0)))))
 
 (defn setup []
   (q/frame-rate (params :frame-rate)))
 
-(defn render [random-counts]
+(defn draw []
   (q/background (params :background))
   (q/stroke 0)
   (q/stroke-weight 2)
@@ -31,13 +31,8 @@
           (q/rect (* x w) (- (q/height) r-count) (dec w) r-count)))))
   random-counts) 
 
-(defn gen-draw-fn [] 
-  "gen function that renders the output"
-  (let [random-counts (make-random-counts)] ; create state
-    (fn [] (render random-counts)))) ; and work with it
-
 (q/defsketch random-walk
   :title "random-distribution"
   :setup setup
-  :draw (gen-draw-fn)
+  :draw draw
   :size (params :size))

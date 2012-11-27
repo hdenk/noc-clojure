@@ -9,7 +9,7 @@
    :rect-width 20
    :rect-height 20})
 
-(defn make-walker []
+(def walker 
   (atom 
     {:x (/ (first (params :size)) 2)
      :y (/ (second (params :size)) 2)}))
@@ -28,20 +28,16 @@
 (defn setup []
   (q/frame-rate (params :frame-rate)))
 
-(defn render [walker]
+(defn draw []
   (q/background (params :background)) 
   (q/stroke 0)
   (q/fill 175)
   (q/rect-mode processing.core.PConstants/CENTER)
-  (q/rect (:x @walker), (:y @walker), (params :rect-width), (params :rect-height)))
-
-(defn gen-draw-fn [] 
-  "Run the walker object"
-  (let [walker (make-walker)] ; create state
-    (fn [] (-> walker (walk) (render))))) ; and work with it 
+  (q/rect (:x @walker), (:y @walker), (params :rect-width), (params :rect-height))
+  (walk walker))
 
 (q/defsketch random-walk
   :title "random-walk"
   :setup setup
-  :draw (gen-draw-fn)
+  :draw draw
   :size (params :size))

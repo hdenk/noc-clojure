@@ -18,7 +18,7 @@
    :topspeed 5
    :acceleration 0.2})
 
-(defn make-mover []
+(def mover
   (let [location (PVector. (params :mover-x) (params :mover-y))
         velocity (PVector. (params :speed-x) (params :speed-y))]
     (atom { :location location :velocity velocity })))
@@ -28,7 +28,7 @@
   (q/background (params :background))
   (q/smooth))
 
-(defn- update-velocity [mover acceleration]
+(defn update-velocity [mover acceleration]
   (swap! 
     mover 
     update-in 
@@ -40,7 +40,7 @@
     acceleration)
   mover)
 
-(defn- update-location [mover]
+(defn update-location [mover]
   (swap! 
     mover 
     update-in 
@@ -49,7 +49,7 @@
     (:velocity @mover))
   mover)
 
-(defn- move-to [mover x y]
+(defn move-to [mover x y]
   ; Velocity changes according to acceleration
   (let [; Compute a vector that points from mover to target
         target-v (PVector/sub (PVector. x y) (:location @mover))
@@ -61,7 +61,7 @@
   ; Location changes by velocity
   (update-location mover)) 
 
-(defn render [mover]
+(defn draw []
   (q/no-stroke)
   (q/fill 255 100)
   (q/rect 0 0 (q/width) (q/height))
@@ -74,14 +74,9 @@
   (q/fill 127)
   (q/ellipse (.-x (:location @mover)) (.-y (:location @mover)) (params :mover-rx) (params :mover-ry)))
 
-(defn gen-draw-fn [] 
-  "gen function that renders the output"
-  (let [mover (make-mover)] ; create state
-    (fn [] (render mover)))) ; and work with it
-
 (q/defsketch motion101-acceleration
   :title "motion-controll by acceleration"
   :setup setup
-  :draw (gen-draw-fn)
+  :draw draw
   :size (params :size))
 
