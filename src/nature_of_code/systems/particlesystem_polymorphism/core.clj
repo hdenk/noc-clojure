@@ -8,7 +8,8 @@
    :frame-rate 30
    :lifespan 255
    :lifespan-dec-rate 2
-   :particle-r 16
+   :circle-r 16
+   :square-l 12
    :particle-color 127}) 
 
 (defn size-x []
@@ -57,19 +58,19 @@
     (q/stroke 0 (:lifespan this))
     (q/stroke-weight 2)
     (q/fill (params :particle-color) (:lifespan this))
-    (q/ellipse (.-x (:location this)) (.-y (:location this)) (params :particle-r) (params :particle-r)))})
+    (q/ellipse (.-x (:location this)) (.-y (:location this)) (params :circle-r) (params :circle-r)))})
 
 (def squared-particle-draw
   {:draw (fn [this]
+    (q/fill (params :particle-color) (:lifespan this))
     (q/stroke 0 (:lifespan this))
     (q/stroke-weight 2)
-    (q/fill (params :particle-color) (:lifespan this))
-    (q/rect-mode :center)
     (q/push-matrix)
     (q/translate (.-x (:location this)) (.-y (:location this)))
-    (let [theta (q/map-range (.-x (:location this)) 0 (size-x) 0 (* Math/PI 2))]
+    (let [theta (q/map-range (.-x (:location this)) 0 (q/width) 0 (* Math/PI 2))]
       (q/rotate theta))
-    (q/rect 0 0 12 12) ; TODO 12 -> params
+    (q/rect-mode :center)
+    (q/rect 0 0 (params :square-l) (params :square-l)) 
     (q/pop-matrix))})
 
 (defrecord CircularConfetti [id mass location velocity acceleration lifespan])
@@ -162,6 +163,7 @@
   ; draw Background
   (q/no-stroke)
   (q/fill 255) 
+  (q/rect-mode :corner)
   (q/rect 0 0 (q/width) (q/height))
 
   ; draw Particles
