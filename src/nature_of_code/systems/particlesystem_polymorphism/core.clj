@@ -109,7 +109,6 @@
   (if (> (rand 1) 0.5)
     (CircularConfetti. id mass location velocity acceleration lifespan)
     (SquaredConfetti. id mass location velocity acceleration lifespan)))
-     
 
 ;;
 ;; ParticleSystem
@@ -129,17 +128,18 @@
 (defrecord ParticleSystem [origin particles particle-count]
   Stateful
   (next-state [this]
-    (let [ next-particles 
+    (let [next-particles 
           (-> (:particles this) 
             (next-particles-state) 
             (add-particle (:origin this) (:particle-count this)) 
-            (remove-expired))]
-      (ParticleSystem. (:origin this) next-particles (inc (:particle-count this))))) 
+            (remove-expired))
+          next-particle-count (inc (:particle-count this))]
+      (assoc this :particles next-particles :particle-count next-particle-count))) 
 
   Massiv
   (apply-force [this force]
     (let [next-particles (map #(apply-force % force) (:particles this))]
-      (ParticleSystem. (:origin this) next-particles (:particle-count this)))) 
+      (assoc this :particles next-particles)))
 
   Drawable
   (draw [this]
