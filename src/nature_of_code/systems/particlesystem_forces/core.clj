@@ -88,12 +88,12 @@
             (next-particles-state) 
             (add-particle origin) 
             (remove-expired))]
-      (ParticleSystem. origin next-particles))) 
+      (assoc this :particles next-particles))) 
 
   Massiv
   (apply-force [this force]
     (let [next-particles (map #(apply-force % force) particles)]
-      (ParticleSystem. origin next-particles))) 
+      (assoc this :particles next-particles))) 
 
   Drawable
   (draw [this]
