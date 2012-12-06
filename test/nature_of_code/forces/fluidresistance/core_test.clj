@@ -24,7 +24,7 @@
   (testing 
     "check-edges"
     (with-redefs-fn 
-      {#'q/height (constantly 400)}       
+      {#'q/height (constantly 400)} ; check-edges calls q/height -> stub it !      
       #(is 
          (= (Mover. "m1" 2.0 (PVector. 600 400) (PVector. -0.9 -0.9) (PVector. 0 0) 127)
             (let [m (Mover. "m1" 2.0 (PVector. 600 411) (PVector. 1 1) (PVector. 0 0) 127)]
