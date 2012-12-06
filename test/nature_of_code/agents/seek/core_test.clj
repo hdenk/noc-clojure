@@ -9,7 +9,7 @@
 
 (defn gen-vehicle
   [& {:keys [id mass location velocity acceleration r max-speed max-force] 
-      :or {id "vx" mass 1.0 location (PVector. 0 0) velocity (PVector. 0 0) acceleration (PVector. 0 0) r 6 max-speed 0 max-force 0}}] 
+      :or {id "vx" mass 0.0 location (PVector. 0 0) velocity (PVector. 0 0) acceleration (PVector. 0 0) r 6 max-speed 0 max-force 0}}] 
   (Vehicle. id mass location velocity acceleration r max-speed max-force)) 
 
 (deftest test-particle
@@ -64,10 +64,10 @@
     (is 
       (=  
         (select-keys 
-          (gen-vehicle :acceleration (PVector. 0.1 0.2))
+          (gen-vehicle :mass 1.0 :acceleration (PVector. 0.1 0.2))
           [:id :mass :location :velocity :acceleration :r :max-speed :max-force])         
         (select-keys 
-          (seek-agent/apply-force (gen-vehicle :acceleration (PVector. 0 0)) (PVector. 0.1 0.2))
+          (seek-agent/apply-force (gen-vehicle :mass 1.0 :acceleration (PVector. 0 0)) (PVector. 0.1 0.2))
           [:id :mass :location :velocity :acceleration :r :max-speed :max-force]))))
   (testing 
     "seek"
