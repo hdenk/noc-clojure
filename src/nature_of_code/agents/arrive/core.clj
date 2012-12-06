@@ -8,7 +8,7 @@
    :frame-rate 30
    :max-speed 4
    :max-force 0.3
-   :arrive-r 100
+   :arrive-r 50
    :target-r 48
    :vehicle-r 6
    :vehicle-color 127}) 
@@ -124,7 +124,7 @@
          (arrive target) 
          (next-state)))))
 
-(q/defsketch particlesystem-forces 
+#_(q/defsketch particlesystem-forces 
   :title "Primitive Agent steers towards Target"
   :setup setup
   :draw draw
