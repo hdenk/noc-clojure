@@ -7,6 +7,7 @@
    :background 255
    :frame-rate 30
    :maxforce 0.1
+   :target-r 12
    :rocket-color 127
    :thrusters-color 0}) 
 
@@ -35,8 +36,9 @@
 (defprotocol Mutable
   (mutate [this mutation-rate] "mutate based on probability"))
 
-(defprotocol TargetOriented
-  (check-target [this target] "check if target-location is hit"))
+(defprotocol SelfAdapting
+  (check-target [this target] "check if target-location is hit")
+  (fitness [this target] "calculate fitness")) 
 
 ;;
 ;; DNA
@@ -93,9 +95,11 @@
           next-acceleration (PVector/add (:acceleration this) mf)]
       (assoc this :acceleration next-acceleration)))
 
-  TargetOriened
-  (check.target [this target]
-    
+  SelfAdapting
+  (check-target [this target]
+    (let [d (q/dist (.-x (:location this)) (.-y (:location this)) (.-x target) (.-y target))
+         next-hit-target (< d (params :target-r))]
+      (assoc this :hit-target next-hit-target)))
 
   (fitness [this target]
     (let [d (q/dist (.-x (:location this)) (.-y (:location this)) (.-x target) (.-y target))]
@@ -103,7 +107,7 @@
 
   Drawable
   (draw [this]
-    (q/fill 100 100)
+    (q/fill 200 100)
     (q/stroke 0)
     (q/push-matrix)
     (q/translate (.-x (:location this)) (.-y (:location this)))
@@ -127,3 +131,10 @@
       (q/vertex r r2)    
       (q/end-shape))        
     (q/pop-matrix)))
+
+(defn gen-rocket
+  [& {:keys [id mass location velocity acceleration r fitness dna gene-counter hit-target] 
+      :or {id "rx" mass 0 location (PVector. 0 0) velocity (PVector. 0 0) acceleration (PVector. 0 0) 
+           r 0 fitness 0 dna (random-DNA (params :lifetime)) gene-counter 0 hit-target false}}] 
+    (Rocket. id mass location velocity acceleration r fitness dna gene-counter hit-target))
+
