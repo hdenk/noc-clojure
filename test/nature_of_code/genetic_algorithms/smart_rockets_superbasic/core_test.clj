@@ -1,9 +1,10 @@
 (ns nature-of-code.genetic-algorithms.smart-rockets-superbasic.core-test
   (:use 
-    clojure.test
-    conjure.core)
+    clojure.test)
   (:require 
     [quil.core :as q]
+    [conjure.core :as conjure]
+    [nature-of-code.test-utils :as test-utils]
     [nature-of-code.genetic-algorithms.smart-rockets-superbasic.core :as sr])
   (:import 
     [processing.core PVector]
@@ -27,21 +28,21 @@
       (= 
         {:genes [1 2 3 :d :e]}
         (select-keys
-          (stubbing [rand-int 3] ; crossover uses rand-int
+          (conjure/stubbing [rand-int 3] ; crossover uses rand-int
             (sr/crossover (gen-dna :genes [1 2 3 4 5]) (gen-dna :genes [:a :b :c :d :e])))
           [:genes])))
     (is 
       (= 
         {:genes [:a :b :c :d :e]}
         (select-keys
-          (stubbing [rand-int 0] ; crossover uses rand-int
+          (conjure/stubbing [rand-int 0] ; crossover uses rand-int
             (sr/crossover (gen-dna :genes [1 2 3 4 5]) (gen-dna :genes [:a :b :c :d :e])))
           [:genes])))
     (is 
       (= 
         {:genes [1 2 3 4 5]}
         (select-keys
-          (stubbing [rand-int 5] ; crossover uses rand-int
+          (conjure/stubbing [rand-int 5] ; crossover uses rand-int
             (sr/crossover (gen-dna :genes [1 2 3 4 5]) (gen-dna :genes [:a :b :c :d :e])))
           [:genes]))))
   (testing 
@@ -91,4 +92,25 @@
           [:id :mass :location :velocity :acceleration :r :fitness :dna :gene-counter :hit-target ])         
         (select-keys 
           (sr/apply-force (gen-rocket :mass 1.0 :acceleration (PVector. 0 0)) (PVector. 0.1 0.2))
-          [:id :mass :location :velocity :acceleration :r :fitness :dna :gene-counter :hit-target])))))
+          [:id :mass :location :velocity :acceleration :r :fitness :dna :gene-counter :hit-target]))))
+  (testing 
+    "check-target" ; der Test ist abhängig von (params :target-r)
+    (is 
+      (=  
+        {:hit-target true} 
+        (select-keys 
+          (sr/check-target (gen-rocket :location (PVector. 100 100)) (PVector. 100 100))
+          [:hit-target])))
+    (is 
+      (=  
+        {:hit-target false} 
+        (select-keys 
+          (sr/check-target (gen-rocket :location (PVector. 200 200)) (PVector. 100 100))
+          [:hit-target]))))
+  (testing 
+    "fitness" 
+    (is 
+      (test-utils/close-to 
+        0.4
+        (sr/fitness (gen-rocket :location (PVector. 100 100)) (PVector. 103 104))))))
+

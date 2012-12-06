@@ -98,7 +98,7 @@
   SelfAdapting
   (check-target [this target]
     (let [d (q/dist (.-x (:location this)) (.-y (:location this)) (.-x target) (.-y target))
-         next-hit-target (< d (params :target-r))]
+          next-hit-target (< d (params :target-r))]
       (assoc this :hit-target next-hit-target)))
 
   (fitness [this target]
@@ -136,5 +136,5 @@
   [& {:keys [id mass location velocity acceleration r fitness dna gene-counter hit-target] 
       :or {id "rx" mass 0 location (PVector. 0 0) velocity (PVector. 0 0) acceleration (PVector. 0 0) 
            r 0 fitness 0 dna (random-DNA (params :lifetime)) gene-counter 0 hit-target false}}] 
-    (Rocket. id mass location velocity acceleration r fitness dna gene-counter hit-target))
+  (Rocket. id mass location velocity acceleration r fitness dna gene-counter hit-target))
 
