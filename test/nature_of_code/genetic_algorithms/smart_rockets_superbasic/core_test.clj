@@ -26,41 +26,36 @@
     "crossover"
     (is 
       (= 
-        {:genes [1 2 3 :d :e]}
-        (select-keys
+        [1 2 3 :d :e]
+        (:genes
           (conjure/stubbing [rand-int 3] ; crossover uses rand-int
-            (sr/crossover (gen-dna :genes [1 2 3 4 5]) (gen-dna :genes [:a :b :c :d :e])))
-          [:genes])))
+            (sr/crossover (gen-dna :genes [1 2 3 4 5]) (gen-dna :genes [:a :b :c :d :e]))))))
     (is 
       (= 
-        {:genes [:a :b :c :d :e]}
-        (select-keys
+        [:a :b :c :d :e]
+        (:genes
           (conjure/stubbing [rand-int 0] ; crossover uses rand-int
-            (sr/crossover (gen-dna :genes [1 2 3 4 5]) (gen-dna :genes [:a :b :c :d :e])))
-          [:genes])))
+            (sr/crossover (gen-dna :genes [1 2 3 4 5]) (gen-dna :genes [:a :b :c :d :e]))))))
     (is 
       (= 
-        {:genes [1 2 3 4 5]}
-        (select-keys
+        [1 2 3 4 5]
+        (:genes
           (conjure/stubbing [rand-int 5] ; crossover uses rand-int
-            (sr/crossover (gen-dna :genes [1 2 3 4 5]) (gen-dna :genes [:a :b :c :d :e])))
-          [:genes]))))
+            (sr/crossover (gen-dna :genes [1 2 3 4 5]) (gen-dna :genes [:a :b :c :d :e])))))))
   (testing 
     "mutate"
     (let [random-genes (vector (PVector. 0.0 0.0))]
       (is 
         (= 
-          {:genes random-genes}
-          (select-keys
-            (sr/mutate (gen-dna :genes random-genes :maxforce 0.1) 0.0) ; mutation-rate zero
-            [:genes]))))
+          random-genes
+          (:genes
+            (sr/mutate (gen-dna :genes random-genes :maxforce 0.1) 0.0))))) ; mutation-rate zero
     (let [random-genes (vector (PVector. 0.0 0.0))]
       (is 
         (not= 
-          {:genes random-genes}
-          (select-keys
-            (sr/mutate (gen-dna :genes random-genes :maxforce 0.1) 1.0) ; mutation-rate 100%
-            [:genes])))))
+          random-genes
+          (:genes
+            (sr/mutate (gen-dna :genes random-genes :maxforce 0.1) 1.0)))))) ; mutation-rate 100%
   (testing 
     "random-DNA"
     (is
@@ -73,44 +68,36 @@
     "next-state"
     (is 
       (= 
-        {:location (PVector. 1.1 1.2)} 
-        (select-keys 
-          (sr/next-state (gen-rocket :location (PVector. 1 1) :velocity (PVector. 0.1 0.2)))
-          [:location]))))
+        (PVector. 1.1 1.2) 
+        (:location
+          (sr/next-state (gen-rocket :location (PVector. 1 1) :velocity (PVector. 0.1 0.2)))))))
   (testing 
     "apply-force"
     (is 
       (=  
-        {:acceleration (PVector. 0.1 0.2)} 
-        (select-keys 
-          (sr/apply-force (gen-rocket :mass 1.0 :acceleration (PVector. 0 0)) (PVector. 0.1 0.2))
-          [:acceleration])))
+        (PVector. 0.1 0.2) 
+        (:acceleration
+          (sr/apply-force (gen-rocket :mass 1.0 :acceleration (PVector. 0 0)) (PVector. 0.1 0.2)))))
     (is 
       (=  
-        (select-keys 
-          (gen-rocket :mass 1.0 :acceleration (PVector. 0.1 0.2))
-          [:id :mass :location :velocity :acceleration :r :fitness :dna :gene-counter :hit-target ])         
-        (select-keys 
-          (sr/apply-force (gen-rocket :mass 1.0 :acceleration (PVector. 0 0)) (PVector. 0.1 0.2))
-          [:id :mass :location :velocity :acceleration :r :fitness :dna :gene-counter :hit-target]))))
+        (gen-rocket :mass 1.0 :acceleration (PVector. 0.1 0.2))
+        (sr/apply-force (gen-rocket :mass 1.0 :acceleration (PVector. 0 0)) (PVector. 0.1 0.2)))))
   (testing 
     "check-target" ; der Test ist abhängig von (params :target-r)
     (is 
       (=  
-        {:hit-target true} 
-        (select-keys 
-          (sr/check-target (gen-rocket :location (PVector. 100 100)) (PVector. 100 100))
-          [:hit-target])))
+        true 
+        (:hit-target
+          (sr/check-target (gen-rocket :location (PVector. 100 100)) (PVector. 100 100)))))
     (is 
       (=  
-        {:hit-target false} 
-        (select-keys 
-          (sr/check-target (gen-rocket :location (PVector. 200 200)) (PVector. 100 100))
-          [:hit-target]))))
+        false 
+        (:hit-target 
+          (sr/check-target (gen-rocket :location (PVector. 200 200)) (PVector. 100 100))))))
   (testing 
     "fitness" 
     (is 
       (test-utils/close-to 
-        0.4
-        (sr/fitness (gen-rocket :location (PVector. 100 100)) (PVector. 103 104))))))
-
+        0.04
+        (:fitness
+            (sr/fitness (gen-rocket :location (PVector. 100 100)) (PVector. 103 104)))))))
