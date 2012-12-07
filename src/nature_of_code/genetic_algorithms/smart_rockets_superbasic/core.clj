@@ -46,6 +46,9 @@
 (defprotocol FitnessAware
   (fitness [this target] "calculate fitness")) 
 
+(defprotocol Agile
+  (move [this] "calculate fitness")) 
+
 ;;
 ;; DNA
 ;;
@@ -77,7 +80,7 @@
                           (:genes this))]
       (assoc this :genes mutated-genes)))) 
 
-(defn random-DNA [lifetime]
+(defn random-dna [lifetime]
   (let [force (rand (params :max-force))
         genes (repeatedly lifetime #(random-gene force))]
     (DNA. (params :max-force) genes)))
@@ -112,6 +115,20 @@
     (let [d (q/dist (.-x (:location this)) (.-y (:location this)) (.-x target) (.-y target))]
       (assoc this :fitness (Math/pow (/ 1 d) 2))))
 
+  Agile
+// Run in relation to all the obstacles
+  // If I'm stuck, don't bother updating or checking for intersection
+  void run() {
+    checkTarget(); // Check to see if we've reached the target
+    if (!hitTarget) {
+      applyForce(dna.genes[geneCounter]);
+      geneCounter = (geneCounter + 1) % dna.genes.length;
+      update();
+    }
+    display();
+  }
+
+
   Drawable
   (draw [this]
     (q/fill 200 100)
@@ -142,7 +159,7 @@
 (defn gen-rocket
   [& {:keys [id mass location velocity acceleration r fitness dna gene-counter hit-target] 
       :or {id "rx" mass 0 location (PVector. 0 0) velocity (PVector. 0 0) acceleration (PVector. 0 0) 
-           r 0 fitness 0 dna (random-DNA (params :lifetime)) gene-counter 0 hit-target false}}] 
+           r 0 fitness 0 dna (random-dna (params :lifetime)) gene-counter 0 hit-target false}}] 
   (Rocket. id mass location velocity acceleration r fitness dna gene-counter hit-target))
 
 ;;
@@ -174,20 +191,20 @@
         generation-count 0]
     (Population. mutation-rate rockets mating-pool generation-count))) 
 
-(defn next-fitness [population]
+(defn next-fitness [population target]
   (let [next-rockets (reduce #(conj %1 (fitness %2 target)) [] (:rockets population))]
     (assoc population :rockets next-rockets))) 
 
 (defn dup-rockets [rocket max-fitness]
   (let [norm-fitness (q/map-range (:fitness rocket) 0 max-fitness 0 1)
-        n (* norm-fitness 100)]
+        n (int (* norm-fitness 100))]
     (repeat n rocket)))
 
 (defn next-mating-pool [population]
   (let [rockets (:rockets population)
-        max-fitness (apply max-key :fitness rockets)
-        next-mating-pool (mapcat (reduce #(conj %1 (dup-rockets %2 max-fitness) [] rockets)))]
-    (assoc population :mation-pool next-mating-pool)))
+        max-fitness (:fitness (apply max-key :fitness rockets))
+        next-mating-pool (into [] (apply concat (reduce #(conj %1 (dup-rockets %2 max-fitness)) [] rockets)))]
+    (assoc population :mating-pool next-mating-pool)))
 
 (defn combine-two-rockets [rocket1 rocket2]
   (let [dna1 (:dna rocket1)
@@ -208,9 +225,10 @@
     (mutate-rocket new-rocket mutation-rate)))
 
 (defn next-reproduction [population]
-  (let [mating-pool (:mating-pool population)
+  (let [mutation-rate (:mutation-rate population)
+        mating-pool (:mating-pool population)
         next-rockets (reduce 
-                       #(conj %1 (reproduce-rocket %2 mating-pool)) 
+                       #(conj %1 (reproduce-rocket %2 mating-pool mutation-rate)) 
                        [] 
                        (range (count (:rockets population))))
         next-generation-count (inc (:generation-count population))]
@@ -220,7 +238,7 @@
 ;; World
 ;;
 
-(defrecord World [population target life-count]
+(defrecord World [population target life-count])
 
 (defn gen-world []
   (let [population (gen-population (params :mutation-rate) (params :rocket-count)) 
@@ -228,7 +246,7 @@
         life-count 0]
     (World. population target life-count))) 
 
-(def world (atom (gen-world)))  
+(def world (atom {}))  
 
 ;;
 ;; Sketch
@@ -236,7 +254,8 @@
 
 (defn setup-sketch []
   (q/frame-rate (params :frame-rate))
-  (q/smooth))
+  (q/smooth)
+  (swap! world (constantly (gen-world))))
 
 (defn draw-sketch []
   ; draw Background
@@ -257,7 +276,7 @@
         (swap! world assoc :population next-population :life-count next-life-count))
       ; next generation
       (let [next-population (-> population
-                              (next-fitness)
+                              (next-fitness (:target @world))
                               (next-mating-pool)
                               (next-reproduction))]
           #(swap! world assoc :population next-population)))
@@ -265,9 +284,9 @@
     ; Display some info
     (q/fill 0) 
     (q/text (str "Generation #: " (:generation-count population)) 10 18)
-    (q/text (str "Cycles left: " (- (param :lifetime) life-count)) 10 36))) 
+    (q/text (str "Cycles left: " (- (params :lifetime) life-count)) 10 36))) 
 
-(q/defsketch smart-rockets-superbasic 
+#_(q/defsketch smart-rockets-superbasic 
   :title "Rockets adapt behavior to environment by applying genetic algorithm"
   :setup setup-sketch
   :draw draw-sketch
