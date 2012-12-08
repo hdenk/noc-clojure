@@ -22,21 +22,21 @@
 ;; Vehicle
 ;;
 
-(defprotocol Stateful
-  (next-state [this] "calc next state for the stateful object"))
+(defprotocol Mobile
+  (move [this] "calc next motion state for the mobile object"))
 
 (defprotocol Massiv
   (apply-force [this force] "apply force to the massive object"))
 
-(defprotocol TargetOriented
-  (seek [this target] "steer towards the target object by applying force"))
+(defprotocol Autonomous
+  (seek [this target] "steer towards a target object by applying force"))
 
 (defprotocol Drawable
   (draw [this] "draw the drawable object to an output-device"))
 
 (defrecord Vehicle [id mass location velocity acceleration r max-speed max-force]
-  Stateful  
-  (next-state [this]
+  Mobile  
+  (move [this]
     (let [next-location (PVector/add location velocity)
           next-velocity (PVector/add velocity acceleration)
           next-acceleration (PVector/mult acceleration (float 0))]
@@ -50,7 +50,7 @@
           next-acceleration (PVector/add acceleration mf)]
       (assoc this :acceleration next-acceleration)))
 
-  TargetOriented
+  Autonomous
   (seek [this target]
     (let [desired (PVector/sub target location)]
       ; Normalize desired and scale to maximum speed
@@ -91,11 +91,11 @@
        :velocity (PVector. 0 -2) :acceleration (PVector. 0 0) 
        :r (params :vehicle-r) :max-speed (params :max-speed) :max-force (params :max-force)})))  
 
-(defn setup []
+(defn setup-sketch []
   (q/frame-rate (params :frame-rate))
   (q/smooth))
 
-(defn draw []
+(defn draw-sketch []
   ; draw Background
   (q/no-stroke)
   (q/fill 255) 
@@ -115,11 +115,11 @@
       vehicle 
       #(-> % 
          (seek target) 
-         (next-state)))))
+         (move)))))
 
 (q/defsketch particlesystem-forces 
   :title "Primitive Agent steers towards Target"
-  :setup setup
-  :draw draw
+  :setup setup-sketch
+  :draw draw-sketch
   :size (params :size))
 

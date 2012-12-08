@@ -21,8 +21,8 @@
 ;; Particle
 ;;
 
-(defprotocol Stateful
-  (next-state [this] "calc next state for the stateful object"))
+(defprotocol Mobile
+  (move [this] "calc next motion state for the mobile object"))
 
 (defprotocol Massiv
   (apply-force [this force] "apply force to the masive object"))
@@ -34,8 +34,8 @@
   (draw [this] "draw the drawable object to an output-device"))
 
 (defrecord Particle [id mass location velocity acceleration lifespan]
-  Stateful  
-  (next-state [this]
+  Mobile  
+  (move [this]
     (let [next-location (PVector/add location velocity)
           next-velocity (PVector/add velocity acceleration)
           next-acceleration (PVector/mult acceleration (float 0))
@@ -69,8 +69,8 @@
 ;; ParticleSystem
 ;;
 
-(defn next-particles-state [particles]
-  (map next-state particles))
+(defn move-particles [particles]
+  (map move particles))
 
 (defn add-particle [particles origin]
   (conj 
@@ -81,11 +81,11 @@
   (remove expired? particles)) 
 
 (defrecord ParticleSystem [origin particles]
-  Stateful
-  (next-state [this]
+  Mobile
+  (move [this]
     (let [ next-particles 
           (-> particles 
-            (next-particles-state) 
+            (move-particles) 
             (add-particle origin) 
             (remove-expired))]
       (assoc this :particles next-particles))) 
@@ -104,11 +104,11 @@
 
 (def particle-system (atom (map->ParticleSystem {:origin (PVector. (/ (size-x) 2) (- (size-y) (* (size-y) 0.75))) :particles []})))
 
-(defn setup []
+(defn setup-sketch []
   (q/frame-rate (params :frame-rate))
   (q/smooth))
 
-(defn draw []
+(defn draw-sketch []
   ; draw Background
   (q/no-stroke)
   (q/fill 255) 
@@ -123,10 +123,10 @@
       particle-system 
       #(-> % 
          (apply-force gravity) 
-         (next-state)))))
+         (move)))))
 
 (q/defsketch particlesystem-forces 
   :title "Particle-System produces Particles that experience Gravity"
-  :setup setup
-  :draw draw
+  :setup setup-sketch
+  :draw draw-sketch
   :size (params :size))

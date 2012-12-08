@@ -9,25 +9,28 @@
 ;;; Mover
 ;;;
 
-(defprotocol Stateful
-  (next-state [this] "calc next state for the stateful object"))
+(defprotocol Mobile
+  (move [this] "calc next state for the stateful object")
+  (check-edges [this] "check if the drawable object is out ouf bounds and react"))
 
 (defprotocol Massiv
   (apply-force [this force] "apply force to the masive object"))
-
-(defprotocol Movable
-  (check-edges [this] "check if the drawable object is out ouf bounds and react"))
 
 (defprotocol Drawable
   (draw [this] "draw the drawable object to an output-device"))
 
 (defrecord Mover [id mass location velocity acceleration color]
-  Stateful  
-  (next-state [this]
+  Mobile  
+  (move [this]
     (let [next-location (PVector/add location velocity)
           next-velocity (PVector/add velocity acceleration)
           next-acceleration (PVector/mult acceleration (float 0))]
       (assoc this :location next-location :velocity next-velocity :acceleration next-acceleration)))
+
+  (check-edges [this]
+    (if (> (.-y location) (q/height)) 
+      (assoc this :location (PVector. (.-x location) (q/height)) :velocity (PVector/mult velocity (float -0.9)))
+      this))
 
   Massiv
   (apply-force [this force] 
@@ -36,12 +39,6 @@
     (let [f (PVector/div force (float mass))
           next-acceleration (PVector/add acceleration f)]
       (assoc this :acceleration next-acceleration)))
-
-  Movable
-  (check-edges [this]
-    (if (> (.-y location) (q/height)) 
-      (assoc this :location (PVector. (.-x location) (q/height)) :velocity (PVector/mult velocity (float -0.9)))
-      this))
 
   Drawable
   (draw [this]
@@ -146,7 +143,7 @@
        % 
        (apply-gravity) 
        (apply-drag-force) 
-       (next-state)) 
+       (move)) 
     movers)) 
 
 (defn setup []
