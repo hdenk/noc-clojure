@@ -23,8 +23,8 @@
 ;; Abstractions
 ;;
 
-(defprotocol Stateful
-  (next-state [this] "calc next state for the stateful object"))
+(defprotocol Mobile
+  (move [this] "calc next motion state for the mobile object"))
 
 (defprotocol Massive
   (apply-force [this force] "apply force to the massive object"))
@@ -56,8 +56,8 @@
     (< (:lifespan particle) 0.0))
 
 (defrecord CircularConfetti [id mass location velocity acceleration lifespan]
-  Stateful 
-  (next-state [this]
+  Mobile 
+  (move [this]
     (particle-next-state this))
 
   Massive
@@ -76,8 +76,8 @@
     (q/ellipse (.-x (:location this)) (.-y (:location this)) (params :circle-r) (params :circle-r))))
 
 (defrecord SquaredConfetti [id mass location velocity acceleration lifespan]
-  Stateful 
-  (next-state [this]
+  Mobile 
+  (move [this]
     (particle-next-state this))
 
   Massive
@@ -112,8 +112,8 @@
 ;; ParticleSystem
 ;;
 
-(defn next-particles-state [particles]
-  (map next-state particles))
+(defn move-particles [particles]
+  (map move particles))
 
 (defn add-particle [particles origin particle-count]
   (conj 
@@ -124,11 +124,11 @@
   (remove expired? particles)) 
 
 (defrecord ParticleSystem [origin particles particle-count]
-  Stateful
-  (next-state [this]
+  Mobile
+  (move [this]
     (let [next-particles 
           (-> (:particles this) 
-            (next-particles-state) 
+            (move-particles) 
             (add-particle (:origin this) (:particle-count this)) 
             (remove-expired))
           next-particle-count (inc (:particle-count this))]
@@ -174,7 +174,7 @@
       particle-system 
       #(-> % 
          (apply-force gravity) 
-         (next-state)))))
+         (move)))))
 
 (q/defsketch particlesystem-polymorphism 
   :title "Particle-System produces Particles that experience Gravity"

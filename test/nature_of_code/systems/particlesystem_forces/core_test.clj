@@ -13,64 +13,53 @@
   (Particle. id mass location velocity acceleration lifespan)) 
 
 (deftest test-particle
-  (testing 
-    "next-state"
-    (is 
-      (= 
-        {:location (PVector. 1.1 1.2)} 
-        (select-keys 
-          (ps/next-state (gen-particle :location (PVector. 1 1) :velocity (PVector. 0.1 0.2)))
-          [:location])))
-    (is
-      (= 
-        {:velocity (PVector. 0.1 0.2)}  
-         (select-keys 
-           (ps/next-state (gen-particle :velocity (PVector. 0.0 0.0) :acceleration (PVector. 0.1 0.2)))
-           [:velocity])))
-    (is
-      (= 
-        {:acceleration (PVector. 0 0)}  
-         (select-keys 
-           (ps/next-state (gen-particle :acceleration (PVector. 0.1 0.2)))
-           [:acceleration])))
-    (is
-      (= 
-         {:lifespan 98.0}  
-         (select-keys 
-           (ps/next-state (gen-particle :lifespan 100.0))
-           [:lifespan])))
-    (is 
-      (=  
-        (select-keys 
-          (gen-particle :location (PVector. 1.1 1.2) :velocity (PVector. 0.2 0.4) :acceleration (PVector. 0.0 0.0) :lifespan 98.0)
-          [:id :mass :location :velocity :acceleration :lifespan]) 
-        (select-keys 
-          (ps/next-state (gen-particle :location (PVector. 1 1) :velocity (PVector. 0.1 0.2) :acceleration (PVector. 0.1 0.2) :lifespan 100.0))
-          [:id :mass :location :velocity :acceleration :lifespan]))))
-  (testing 
-    "apply-force"
-    (is 
-      (=  
-        {:acceleration (PVector. 0.1 0.2)} 
-        (select-keys 
-          (ps/apply-force (gen-particle :mass 1.0 :acceleration (PVector. 0 0)) (PVector. 0.1 0.2))
-          [:acceleration])))
-    (is 
-      (=  
-        (select-keys 
+  (with-redefs [ps/params {}] ; to avoid unintended dependencies in params
+    (testing 
+      "move"
+      (with-redefs [ps/params {:lifespan-dec-rate 2}] ; dependent on (params :lifespan-dec-rate)
+        (is 
+          (= 
+            (PVector. 1.1 1.2) 
+            (:location 
+              (ps/move (gen-particle :location (PVector. 1 1) :velocity (PVector. 0.1 0.2))))))
+        (is
+          (= 
+            (PVector. 0.1 0.2) 
+            (:velocity 
+              (ps/move (gen-particle :velocity (PVector. 0.0 0.0) :acceleration (PVector. 0.1 0.2))))))
+        (is
+          (= 
+            (PVector. 0 0)  
+            (:acceleration 
+              (ps/move (gen-particle :acceleration (PVector. 0.1 0.2))))))
+        (is
+          (= 
+            98.0  
+            (:lifespan 
+              (ps/move (gen-particle :lifespan 100.0)))))
+        (is 
+          (=  
+            (gen-particle :location (PVector. 1.1 1.2) :velocity (PVector. 0.2 0.4) :acceleration (PVector. 0.0 0.0) :lifespan 98.0)
+            (ps/move (gen-particle :location (PVector. 1 1) :velocity (PVector. 0.1 0.2) :acceleration (PVector. 0.1 0.2) :lifespan 100.0))))))
+    (testing 
+      "apply-force"
+      (is 
+        (=  
+          (PVector. 0.1 0.2) 
+          (:acceleration 
+            (ps/apply-force (gen-particle :mass 1.0 :acceleration (PVector. 0 0)) (PVector. 0.1 0.2)))))
+      (is 
+        (=  
           (gen-particle :acceleration (PVector. 0.1 0.2))
-          [:id :mass :location :velocity :acceleration :lifespan])         
-        (select-keys 
-          (ps/apply-force (gen-particle :acceleration (PVector. 0 0)) (PVector. 0.1 0.2))
-          [:id :mass :location :velocity :acceleration :lifespan]))))
-  (testing 
-    "expired?"
-    (is 
-      (false?  
-        (ps/expired? (gen-particle :lifespan 1.0))))
-    (is 
-      (false?
-        (ps/expired? (gen-particle :lifespan 0.0))))
-    (is 
-      (true?
-        (ps/expired? (gen-particle :lifespan -1.0))))))
+          (ps/apply-force (gen-particle :acceleration (PVector. 0 0)) (PVector. 0.1 0.2)))))
+    (testing 
+      "expired?"
+      (is 
+        (false?  
+          (ps/expired? (gen-particle :lifespan 1.0))))
+      (is 
+        (false?
+          (ps/expired? (gen-particle :lifespan 0.0))))
+      (is 
+        (true?
+          (ps/expired? (gen-particle :lifespan -1.0)))))))
