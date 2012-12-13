@@ -83,10 +83,15 @@
                                 (:genes this)))]
       (assoc this :genes mutated-genes)))) 
 
+(defn gen-dna 
+  [& {:keys [maxforce genes] 
+      :or {maxforce 0.0 genes []}}] 
+  (DNA. maxforce genes)) 
+
 (defn random-dna [lifetime]
   (let [force (rand (params :max-force))
         genes (vec (repeatedly lifetime #(random-gene force)))]
-    (DNA. (params :max-force) genes)))
+    (gen-dna :max-force (params :max-force) :genes genes)))
 
 ;;
 ;; Rocket
@@ -164,7 +169,7 @@
 (defn gen-rocket
   [& {:keys [id mass location velocity acceleration r fitness dna gene-counter hit-target] 
       :or {id "rx" mass 1.0 location (PVector. 0 0) velocity (PVector. 0 0) acceleration (PVector. 0 0) 
-           r (params :rocket-r) fitness 0 dna nil gene-counter 0 hit-target false}}] 
+           r (params :rocket-r) fitness 0 dna [] gene-counter 0 hit-target false}}] 
   (Rocket. id mass location velocity acceleration r fitness dna gene-counter hit-target))
 
 ;;
@@ -172,6 +177,11 @@
 ;;
 
 (defrecord Population [mutation-rate rockets mating-pool generation-count])
+
+(defn gen-population
+  [& {:keys [mutation-rate rockets mating-pool generation-count] 
+      :or {mutation-rate 0.0 rockets [] mating-pool [] generation-count 0}}] 
+  (Population. mutation-rate rockets mating-pool generation-count))
 
 (defn gen-random-rockets [rocket-count]
   (into [] 
@@ -182,17 +192,11 @@
          :dna  (random-dna (params :lifetime)))
       (range rocket-count))))
 
-(defn gen-population 
-  [mutation-rate rocket-count]
-  (let [rockets (gen-random-rockets rocket-count)
-        mating-pool []
-        generation-count 0]
-    (Population. mutation-rate rockets mating-pool generation-count))) 
-
-(defn next-motion-state [population target]
-  (let [next-rockets (map 
-                       #(next-motion-state % target) 
-                       (:rockets population))] 
+(defn next-motion-stateX [population target]
+  (let [next-rockets (into []
+                           (map 
+                             #(next-motion-state % target) 
+                             (:rockets population)))] 
     (assoc population :rockets next-rockets)))
 
 (defn calc-fitness [population target]
@@ -264,11 +268,10 @@
 
 (defrecord World [population target life-count])
 
-(defn gen-world []
-  (let [population (gen-population (params :mutation-rate) (params :rocket-count)) 
-        target (PVector. (/ (size-x) 2) (params :target-r))
-        life-count 0]
-    (World. population target life-count))) 
+(defn gen-world 
+  [& {:keys [population target life-count] 
+      :or {population nil target (PVector. 0 0) life-count 0}}] 
+  (World. population target life-count)) 
 
 (def world (atom {}))  
 
@@ -279,7 +282,13 @@
 (defn setup-sketch []
   (q/frame-rate (params :frame-rate))
   (q/smooth)
-  (swap! world (constantly (gen-world))))
+
+  ; initialize world
+  (let [rockets (gen-random-rockets (params :rocket-count))
+        mutation-rate (params :mutation-rate)
+        population (gen-population :mutation-rate mutation-rate :rockets rockets)
+        target (PVector. (/ (size-x) 2) (params :target-r))]
+    (swap! world (constantly (gen-world :population population :target target :life-count 0)))))
 
 (defn draw-sketch []
   ; draw Background
@@ -301,7 +310,7 @@
     (if (< life-count (params :lifetime))
       ; next step in current populations life
       (time
-      (let [next-population (next-motion-state population target)
+      (let [next-population (next-motion-stateX population target)
             next-life-count (inc life-count)]
         (swap! world assoc :population next-population :life-count next-life-count)))
       ; next generation
@@ -319,7 +328,7 @@
 (defn mouse-pressed [] 
   (swap! world assoc :target (PVector. (q/mouse-x) (q/mouse-y))))
 
-(q/defsketch smart-rockets-superbasic 
+#_(q/defsketch smart-rockets-superbasic 
   :title "Rockets adapt behavior to environment by applying genetic algorithm"
   :setup setup-sketch
   :draw draw-sketch
