@@ -1,4 +1,5 @@
 (ns nature-of-code.genetic-algorithms.smart-rockets-superbasic.core
+  (:require [clojure.core.reducers :as r])
   (:require [quil.core :as q])
   (:import [processing.core PVector]))
 
@@ -17,7 +18,7 @@
    :mutation-rate 0.01
    :max-force 1.0 
    :target-r 24
-   :rocket-count 50 
+   :rocket-count 500 
    :rocket-r 4
    :rocket-color 127
    :thrusters-color 0}) 
@@ -74,12 +75,12 @@
       (assoc this :genes child-genes)))
 
   (mutate [this mutation-rate]
-    (let [mutated-genes (reduce 
-                          #(if (< (rand) mutation-rate)
-                             (conj %1 (random-gene 0.1))
-                             (conj %1 %2)) 
-                          [] 
-                          (:genes this))]
+    (let [mutated-genes (into []
+                              (map    
+                                #(if (< (rand) mutation-rate)
+                                   (random-gene 0.1)
+                                   %) 
+                                (:genes this)))]
       (assoc this :genes mutated-genes)))) 
 
 (defn random-dna [lifetime]
@@ -173,13 +174,13 @@
 (defrecord Population [mutation-rate rockets mating-pool generation-count])
 
 (defn gen-random-rockets [rocket-count]
-  (reduce 
-    #(conj %1 (gen-rocket
-                :id (str "r" %2)
-                :location (PVector. (/ (size-x) 2) (- (size-y) 20))
-                :dna  (random-dna (params :lifetime))))
-    []
-    (range rocket-count)))
+  (into [] 
+    (map
+      #(gen-rocket
+         :id (str "r" %)
+         :location (PVector. (/ (size-x) 2) (- (size-y) 20))
+         :dna  (random-dna (params :lifetime)))
+      (range rocket-count))))
 
 (defn gen-population 
   [mutation-rate rocket-count]
@@ -188,8 +189,17 @@
         generation-count 0]
     (Population. mutation-rate rockets mating-pool generation-count))) 
 
+(defn next-motion-state [population target]
+  (let [next-rockets (map 
+                       #(next-motion-state % target) 
+                       (:rockets population))] 
+    (assoc population :rockets next-rockets)))
+
 (defn calc-fitness [population target]
-  (let [next-rockets (reduce #(conj %1 (fitness %2 target)) [] (:rockets population))]
+  (let [next-rockets (into []
+                           (map
+                             #(fitness % target) 
+                             (:rockets population)))]
     (assoc population :rockets next-rockets))) 
 
 (defn dup-rockets [rocket max-fitness]
@@ -197,10 +207,17 @@
         n (int (* norm-fitness 100))]
     (repeat n rocket)))
 
+(defn gen-mating-pool [rockets max-fitness]
+  (vec 
+    (apply 
+      concat 
+      (map 
+        #(dup-rockets % max-fitness) rockets))))
+
 (defn populate-mating-pool [population]
   (let [rockets (:rockets population)
         max-fitness (:fitness (apply max-key :fitness rockets))
-        next-mating-pool (vec (apply concat (reduce #(conj %1 (dup-rockets %2 max-fitness)) [] rockets)))]
+        next-mating-pool (gen-mating-pool rockets max-fitness)]
     (assoc population :mating-pool next-mating-pool)))
 
 (defn combine-two-rockets [rocket-index rocket1 rocket2]
@@ -225,9 +242,8 @@
     (mutate-rocket new-rocket mutation-rate)))
 
 (defn reproduce-rockets [rockets-count mating-pool mutation-rate]
-  (into 
-    [] 
-    (map 
+  (into [] 
+    (r/map  ; clojure.core.reducers/map -> fork-join
       #(reproduce-rocket % mating-pool mutation-rate) 
       (range rockets-count)))) 
 
@@ -238,10 +254,6 @@
         next-rockets (reproduce-rockets rockets-count mating-pool mutation-rate)
         next-generation-count (inc (:generation-count population))]
     (assoc population :rockets next-rockets :generation-count next-generation-count)))
-
-(defn next-motion-state [population target]
-  (let [next-rockets (map #(next-motion-state % target) (:rockets population))] 
-    (assoc population :rockets next-rockets)))
 
 (defn draw-population [population]
   (dorun (map draw (:rockets population))))
@@ -288,9 +300,10 @@
 
     (if (< life-count (params :lifetime))
       ; next step in current populations life
+      (time
       (let [next-population (next-motion-state population target)
             next-life-count (inc life-count)]
-        (swap! world assoc :population next-population :life-count next-life-count))
+        (swap! world assoc :population next-population :life-count next-life-count)))
       ; next generation
       (let [next-population (-> population
                               (calc-fitness target)
@@ -303,8 +316,12 @@
     (q/text (str "Generation #: " (:generation-count population)) 10 18)
     (q/text (str "Cycles left: " (- (params :lifetime) life-count)) 10 36))) 
 
+(defn mouse-pressed [] 
+  (swap! world assoc :target (PVector. (q/mouse-x) (q/mouse-y))))
+
 (q/defsketch smart-rockets-superbasic 
   :title "Rockets adapt behavior to environment by applying genetic algorithm"
   :setup setup-sketch
   :draw draw-sketch
+  :mouse-pressed mouse-pressed
   :size (params :size))

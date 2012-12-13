@@ -113,7 +113,17 @@
 (deftest test-population
   (with-redefs [smart-rockets/params {}] 
     (testing 
-      "next-fitness"
+      "next-motion-state"
+      (with-redefs [smart-rockets/params {:target-r 10}] ; depends on (params :target-r)
+        (is 
+          (= (PVector. 1 2)
+             (:velocity
+               (first
+                 (:rockets
+                   (smart-rockets/next-motion-state 
+                     (gen-population :rockets (vector (gen-rocket :dna (gen-dna :genes (vector (PVector. 1 2)))))) (PVector. 100 100)))))))))
+    (testing 
+      "calc-fitness"
       (is 
         (test-utils/close-to
           0.04
@@ -123,22 +133,22 @@
                 (smart-rockets/calc-fitness 
                   (gen-population :rockets (vector (gen-rocket))) (PVector. 3 4)))))))) 
     (testing 
-      "next-mating-pool"
+      "populate-mating-pool"
       (is
-         (=
-           133
-           (count 
-             (:mating-pool 
-               (smart-rockets/populate-mating-pool 
-                 (gen-population :rockets (vector (gen-rocket :fitness 0.1) (gen-rocket :fitness 0.3)))))))))
+        (=
+          133
+          (count 
+            (:mating-pool 
+              (smart-rockets/populate-mating-pool 
+                (gen-population :rockets (vector (gen-rocket :fitness 0.1) (gen-rocket :fitness 0.3)))))))))
     (testing 
       "next-generation"
       (is
-         (=
-           2
-           (count (:rockets
-             (with-redefs [smart-rockets/params {:max-force 0.1 :size [400 600]}] ; depends on (params :max-force) and (params :size)
-               (smart-rockets/next-generation 
-                 (smart-rockets/populate-mating-pool 
-                   (gen-population :rockets (vector (gen-rocket :fitness 0.1) (gen-rocket :fitness 0.3)))))))))))))
+        (=
+          2
+          (count (:rockets
+                   (with-redefs [smart-rockets/params {:max-force 0.1 :size [400 600]}] ; depends on (params :max-force) and (params :size)
+                     (smart-rockets/next-generation 
+                       (smart-rockets/populate-mating-pool 
+                         (gen-population :rockets (vector (gen-rocket :fitness 0.1) (gen-rocket :fitness 0.3)))))))))))))
 
