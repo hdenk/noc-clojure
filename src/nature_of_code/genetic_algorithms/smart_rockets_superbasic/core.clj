@@ -3,13 +3,6 @@
   (:require [quil.core :as q])
   (:import [processing.core PVector]))
 
-(defmacro dbg
-  "print debug-infos to console"
-  [x] 
-  `(let 
-     [x# ~x] 
-     (println "dbg:" '~x "=" x#) x#)) 
-
 (def params ^{:doc "DataStructure representing Params to customize the app"} 
   {:size [600 400]
    :background 255
@@ -34,24 +27,17 @@
 ;;
 
 (defprotocol Mobile
-  (move [this] "calc next motion-state for the movable object")
-  (next-motion-state [this target] "proceed to next motion state"))
+  (move [this] "moves the mobile Object"))
 
 (defprotocol Massive
   (apply-force [this force] "apply force to the massive object"))
 
-(defprotocol Genetic 
-  (crossover [this partner] "produce new DNA by mixing genes of two individuals")
-  (mutate [this mutation-rate] "mutate based on probability"))
-
-(defprotocol FitnessAware 
-  (fitness [this target] "calculate fitness")) 
-
-(defprotocol TargetAware 
-  (check-target [this target] "check if target-location is hit"))
-
 (defprotocol Drawable
   (draw [this] "draw the drawable object to an output-device"))
+
+(defprotocol Genetic ; TODO find better names for this abstraction(s)
+  (crossover [this partner] "produce new DNA by mixing genes of two individuals")
+  (mutate [this mutation-rate] "mutate based on probability"))
 
 ;;
 ;; DNA
@@ -65,23 +51,23 @@
 
 (defrecord DNA [max-force genes]
   Genetic
-  (crossover [this partner-dna]
-    (let [crossover (rand-int (count (:genes this)))
+  (crossover [dna partner-dna]
+    (let [crossover (rand-int (count (:genes dna)))
           child-genes (into 
                         [] 
                         (concat 
-                          (first (split-at crossover (:genes this))) 
+                          (first (split-at crossover (:genes dna))) 
                           (second (split-at crossover (:genes partner-dna)))))]
-      (assoc this :genes child-genes)))
+      (assoc dna :genes child-genes)))
 
-  (mutate [this mutation-rate]
+  (mutate [dna mutation-rate]
     (let [mutated-genes (into []
                               (map    
                                 #(if (< (rand) mutation-rate)
                                    (random-gene 0.1)
                                    %) 
-                                (:genes this)))]
-      (assoc this :genes mutated-genes)))) 
+                                (:genes dna)))]
+      (assoc dna :genes mutated-genes)))) 
 
 (defn gen-dna 
   [& {:keys [maxforce genes] 
@@ -97,59 +83,47 @@
 ;; Rocket
 ;;
 
-(defrecord Rocket [id mass location velocity acceleration r fitness dna gene-index hit-target]
-  Mobile 
-  (move [this]
-    (let [next-location (PVector/add (:location this) (:velocity this))
-          next-velocity (PVector/add (:velocity this) (:acceleration this))
-          next-acceleration (PVector/mult (:acceleration this) (float 0))]
-      (assoc this :location next-location :velocity next-velocity :acceleration next-acceleration)))
+(defn next-motion-state [rocket]
+  (let [next-location (PVector/add (:location rocket) (:velocity rocket))
+        next-velocity (PVector/add (:velocity rocket) (:acceleration rocket))
+        next-acceleration (PVector/mult (:acceleration rocket) (float 0))]
+    (assoc rocket :location next-location :velocity next-velocity :acceleration next-acceleration)))
 
-  (next-motion-state [this target]
-    (if-not (:hit-target this)
-      (let [dna (:dna this)
+(defrecord Rocket [id mass location velocity acceleration r fitness dna gene-index min-d hit-target]
+  Mobile 
+  (move [rocket]
+    (if-not (:hit-target rocket)
+      (let [dna (:dna rocket)
             genes (:genes dna)
-            gene-index (:gene-index this)
+            gene-index (:gene-index rocket)
             force (get genes gene-index)
             next-gene-index (mod (inc gene-index) (count genes))]
-        (-> this
+        (-> rocket 
           (apply-force force)
-          (move)
-          (check-target target)
+          (next-motion-state)
           (assoc :gene-index next-gene-index)))
-      this))
+      rocket))
 
   Massive
-  (apply-force [this force]
+  (apply-force [rocket force]
     (let [f (.get force)
-          mf (PVector/div f (float (:mass this)))
-          next-acceleration (PVector/add (:acceleration this) mf)]
-      (assoc this :acceleration next-acceleration)))
-
-  TargetAware
-  (check-target [this target]
-    (let [d (q/dist (.-x (:location this)) (.-y (:location this)) (.-x target) (.-y target))
-          next-hit-target (< d (params :target-r))]
-      (assoc this :hit-target next-hit-target)))
-
-  FitnessAware
-  (fitness [this target]
-    (let [d (q/dist (.-x (:location this)) (.-y (:location this)) (.-x target) (.-y target))]
-      (assoc this :fitness (Math/pow (/ 1 d) 2))))
+          mf (PVector/div f (float (:mass rocket)))
+          next-acceleration (PVector/add (:acceleration rocket) mf)]
+      (assoc rocket :acceleration next-acceleration)))
 
   Drawable
-  (draw [this]
+  (draw [rocket]
     (q/fill 200 100)
     (q/stroke 0)
     (q/rect-mode :center)
 
     (q/push-matrix)
-    (q/translate (.-x (:location this)) (.-y (:location this)))
+    (q/translate (.-x (:location rocket)) (.-y (:location rocket)))
     ; Draw a triangle rotated in the direction of velocity
-    (let [theta (+ (.heading2D (:velocity this)) (/ Math/PI 2))]
+    (let [theta (+ (.heading2D (:velocity rocket)) (/ Math/PI 2))]
       (q/rotate theta))
 
-    (let [r (:r this)
+    (let [r (:r rocket)
           rh (/ r 2)
           r2 (* r 2)]
       ; Thrusters
@@ -167,10 +141,29 @@
     (q/pop-matrix)))
 
 (defn gen-rocket
-  [& {:keys [id mass location velocity acceleration r fitness dna gene-counter hit-target] 
+  [& {:keys [id mass location velocity acceleration r fitness dna gene-counter min-d hit-target] 
       :or {id "rx" mass 1.0 location (PVector. 0 0) velocity (PVector. 0 0) acceleration (PVector. 0 0) 
-           r (params :rocket-r) fitness 0 dna [] gene-counter 0 hit-target false}}] 
-  (Rocket. id mass location velocity acceleration r fitness dna gene-counter hit-target))
+           r (params :rocket-r) fitness 0 dna [] gene-counter 0 min-d Integer/MAX_VALUE hit-target false}}] 
+  (Rocket. id mass location velocity acceleration r fitness dna gene-counter min-d hit-target))
+
+(defn fitness [rocket target]
+  (if (:hit-target rocket)
+    ; hit-target -> fitness-criterium = how-fast
+    (let [how-fast (Math/pow (- (params :lifetime) (:gene-index rocket)) 2)] 
+      (dbg how-fast)
+      (assoc rocket :fitness how-fast)) 
+    ; didn't hit-target -> fitness-criterium = how-near
+    (let [d (q/dist (.-x (:location rocket)) (.-y (:location rocket)) (.-x target) (.-y target))
+          min-d (min (:min-d rocket) d)
+          how-near (Math/pow (/ 1 min-d) 2)]
+      (dbg how-near)
+      (assoc rocket :fitness how-near))))
+
+(defn check-target [rocket target]
+  (let [d (q/dist (.-x (:location rocket)) (.-y (:location rocket)) (.-x target) (.-y target))
+        next-hit-target (< d (params :target-r))
+        next-min-d (min (:min-d rocket d))]
+    (assoc rocket :hit-target next-hit-target :min-d next-min-d)))
 
 ;;
 ;; Population
@@ -185,21 +178,21 @@
 
 (defn gen-random-rockets [rocket-count]
   (into [] 
-    (map
-      #(gen-rocket
-         :id (str "r" %)
-         :location (PVector. (/ (size-x) 2) (- (size-y) 20))
-         :dna  (random-dna (params :lifetime)))
-      (range rocket-count))))
+        (map
+          #(gen-rocket
+             :id (str "r" %)
+             :location (PVector. (/ (size-x) 2) (- (size-y) 20))
+             :dna  (random-dna (params :lifetime)))
+          (range rocket-count))))
 
-(defn next-motion-stateX [population target]
+(defn move-and-check-rockets [population target]
   (let [next-rockets (into []
                            (map 
-                             #(next-motion-state % target) 
+                             #(-> % (move) (check-target target)) 
                              (:rockets population)))] 
     (assoc population :rockets next-rockets)))
 
-(defn calc-fitness [population target]
+(defn calc-rocket-fitness [population target]
   (let [next-rockets (into []
                            (map
                              #(fitness % target) 
@@ -222,6 +215,7 @@
   (let [rockets (:rockets population)
         max-fitness (:fitness (apply max-key :fitness rockets))
         next-mating-pool (gen-mating-pool rockets max-fitness)]
+    (dbg max-fitness)
     (assoc population :mating-pool next-mating-pool)))
 
 (defn combine-two-rockets [rocket-index rocket1 rocket2]
@@ -247,9 +241,9 @@
 
 (defn reproduce-rockets [rockets-count mating-pool mutation-rate]
   (into [] 
-    (r/map  ; clojure.core.reducers/map -> fork-join
-      #(reproduce-rocket % mating-pool mutation-rate) 
-      (range rockets-count)))) 
+        (r/map  ; clojure.core.reducers/map -> fork-join
+               #(reproduce-rocket % mating-pool mutation-rate) 
+               (range rockets-count)))) 
 
 (defn next-generation [population]
   (let [mutation-rate (:mutation-rate population)
@@ -309,13 +303,12 @@
 
     (if (< life-count (params :lifetime))
       ; next step in current populations life
-      (time
-      (let [next-population (next-motion-stateX population target)
+      (let [next-population (move-and-check-rockets population target)
             next-life-count (inc life-count)]
-        (swap! world assoc :population next-population :life-count next-life-count)))
+        (swap! world assoc :population next-population :life-count next-life-count))
       ; next generation
       (let [next-population (-> population
-                              (calc-fitness target)
+                              (calc-rocket-fitness target)
                               (populate-mating-pool)
                               (next-generation))]
         (swap! world assoc :population next-population :life-count 0)))
@@ -328,7 +321,7 @@
 (defn mouse-pressed [] 
   (swap! world assoc :target (PVector. (q/mouse-x) (q/mouse-y))))
 
-#_(q/defsketch smart-rockets-superbasic 
+(q/defsketch smart-rockets-superbasic 
   :title "Rockets adapt behavior to environment by applying genetic algorithm"
   :setup setup-sketch
   :draw draw-sketch

@@ -72,12 +72,18 @@
 (deftest test-rocket
   (with-redefs [smart-rockets/params test-params] 
     (testing 
-      "move"
+      "next-motion-state"
       (is 
         (= 
           (PVector. 1.1 1.2) 
           (:location
-            (smart-rockets/move (smart-rockets/gen-rocket :location (PVector. 1 1) :velocity (PVector. 0.1 0.2)))))))
+            (smart-rockets/next-motion-state (smart-rockets/gen-rocket :location (PVector. 1 1) :velocity (PVector. 0.1 0.2)))))))
+    (testing 
+      "move"
+      (is 
+        (not= (PVector. 0 0) ; velocity ungleich null-vector
+          (:velocity
+            (smart-rockets/move (smart-rockets/gen-rocket :velocity (PVector. 0 0) :acceleration (PVector. 0 0) :dna (smart-rockets/random-dna 3)))))))
     (testing 
       "apply-force"
       (is 
@@ -118,7 +124,7 @@
         (not= (PVector. 0 0) ; velocity ungleich null-vector
               (get-in
                 (let [test-world (gen-test-world)]
-                  (smart-rockets/next-motion-stateX (:population test-world) (:target test-world)))
+                  (smart-rockets/move-and-check-rockets (:population test-world) (:target test-world)))
                 [:rockets 0 :velocity]))))
     (testing 
       "calc-fitness"
