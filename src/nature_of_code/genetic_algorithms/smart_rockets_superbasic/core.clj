@@ -146,6 +146,7 @@
            r (params :rocket-r) fitness 0 dna [] gene-counter 0 min-d Integer/MAX_VALUE hit-target false}}] 
   (Rocket. id mass location velocity acceleration r fitness dna gene-counter min-d hit-target))
 
+; TODO fitness-funktion zurück nach einfach, min-d entfernen ?
 (defn fitness [rocket target]
   (if (:hit-target rocket)
     ; hit-target -> fitness-criterium = how-fast
@@ -301,6 +302,7 @@
     ; draw rockets 
     (draw-population (:population @world))
 
+    ; state-progression 
     (if (< life-count (params :lifetime))
       ; next step in current populations life
       (let [next-population (move-and-check-rockets population target)
