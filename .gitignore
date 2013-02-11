@@ -1,5 +1,6 @@
+.project
 *.swp
-.lein*
-/lib/
-/classes/
+.lein-*
+/target/
 /native/
+/attic/
