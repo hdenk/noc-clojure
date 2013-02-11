@@ -7,7 +7,7 @@
     [nature-of-code.genetic-algorithms.smart-rockets.core :as smart-rockets])
   (:import 
     [processing.core PVector]
-    [nature_of_code.genetic_algorithms.smart_rockets.core DNA Rocket Population]))
+    [nature_of_code.genetic_algorithms.smart_rockets.core DNA Obstacle Rocket Population]))
 
 (def test-params 
   {:size [300 400]
@@ -22,8 +22,9 @@
   (let [dna (smart-rockets/random-dna 3)
         rocket1 (smart-rockets/gen-rocket :dna dna :fitness 1)
         rocket2 (smart-rockets/gen-rocket :dna dna :fitness 2)
-        population (smart-rockets/gen-population :rockets (vector rocket1 rocket2))]
-    (smart-rockets/gen-world :population population :target (PVector. 100 100))))
+        population (smart-rockets/gen-population :rockets (vector rocket1 rocket2))
+        obstacles []] ; TODO ?
+    (smart-rockets/gen-world :population population :obstacles obstacles :target (PVector. 100 100))))
 
 (deftest test-dna
   (with-redefs [smart-rockets/params test-params] 
@@ -68,6 +69,19 @@
           100
           (with-redefs [smart-rockets/params {:max-force 0.1}] ; depends on (params :max-force)
             (count (:genes (smart-rockets/random-dna 100)))))))))
+
+(deftest test-obstacle
+  (with-redefs [smart-rockets/params test-params] 
+    (testing 
+      "contains?"
+      (is
+        (= 
+          false
+          (smart-rockets/contains? (Obstacle. (PVector. 50 50) 50  50) (PVector. 0 0))))
+      (is 
+        (=
+          true
+          (smart-rockets/contains? (Obstacle. (PVector. 50 50) 50 50) (PVector. 75 75)))))))
 
 (deftest test-rocket
   (with-redefs [smart-rockets/params test-params] 
@@ -119,12 +133,12 @@
 (deftest test-population
   (with-redefs [smart-rockets/params test-params] 
     (testing 
-      "next-motion-state"
+      "next-rockets-state"
       (is 
         (not= (PVector. 0 0) ; velocity ungleich null-vector
               (get-in
                 (let [test-world (gen-test-world)]
-                  (smart-rockets/move-and-check-rockets (:population test-world) (:target test-world)))
+                  (smart-rockets/next-rockets-state (:population test-world) (:obstacles test-world) (:target test-world)))
                 [:rockets 0 :velocity]))))
     (testing 
       "calc-fitness"

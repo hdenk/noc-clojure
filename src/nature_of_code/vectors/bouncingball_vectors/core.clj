@@ -68,9 +68,10 @@
   (q/fill 175)
   (q/ellipse (.-x (:location @ball)) (.-y (:location @ball)) (params :ball-r) (params :ball-r)))
 
-(q/defsketch bouncing-ball
-  :title "Bouncing Ball with Vectors"
-  :setup setup
-  :draw draw
-  :size (params :size))
-
+(defn run []
+	(q/defsketch bouncing-ball
+	  :title "Bouncing Ball with Vectors"
+	  :target :none
+	  :setup setup
+	  :draw draw
+	  :size (params :size)))

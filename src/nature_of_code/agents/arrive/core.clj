@@ -124,8 +124,10 @@
          (arrive target) 
          (move)))))
 
-#_(q/defsketch particlesystem-forces 
-  :title "Primitive Agent steers towards Target"
-  :setup setup
-  :draw draw
-  :size (params :size))
+(defn run []
+	(q/defsketch particlesystem-forces 
+	  :title "Primitive Agent steers towards Target"
+	  :target :none
+	  :setup setup
+	  :draw draw
+	  :size (params :size)))

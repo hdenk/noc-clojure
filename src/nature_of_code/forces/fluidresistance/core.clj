@@ -182,10 +182,11 @@
        [:movers] 
        movers-next-state)))
 
-(q/defsketch fluidresistance
-  :title "Bodies experience gravity and fluid resistance"
-  :setup setup
-  :draw draw
-  :mouse-pressed mouse-pressed
-  :size (params :size))
+(defn run []
+	(q/defsketch fluidresistance
+	  :title "Bodies experience gravity and fluid resistance"
+	  :setup setup
+	  :draw draw
+	  :mouse-pressed mouse-pressed
+	  :size (params :size)))
 

@@ -1,5 +1,4 @@
 (ns nature-of-code.genetic-algorithms.smart-rockets.core
-  (:require [clojure.core.reducers :as r])
   (:require [quil.core :as q])
   (:import [processing.core PVector]))
 
@@ -15,12 +14,12 @@
    :background 255
    :frame-rate 30
    :lifetime 200
-   :mutation-rate 0.01
+   :mutation-rate 0.05
    :max-force 1.0 
-   :target-r 2
+   :target-r 20
    :obstacle-w 200
    :obstacle-h 20
-   :rocket-count 500 
+   :rocket-count 100 
    :rocket-r 4
    :rocket-color 127
    :thrusters-color 0}) 
@@ -42,12 +41,12 @@
   (apply-force [this force] "apply force to the massive object"))
 
 (defprotocol Spatial
-  (contains [this spot] "returns true if the spatial object contains the spot"))
+  (contains? [this spot] "returns true if the spatial object contains the spot"))
 
 (defprotocol Drawable
   (draw [this] "draw the drawable object to an output-device"))
 
-(defprotocol Genetic ; TODO find better names for this abstraction(s)
+(defprotocol Genetic ; TODO find better names for the abstraction(s)
   (crossover [this partner] "produce new DNA by mixing genes of two individuals")
   (mutate [this mutation-rate] "mutate based on probability"))
 
@@ -96,7 +95,7 @@
 ;;
 (defrecord Obstacle [location w h]
   Spatial
-  (contains [obstacle spot]
+  (contains? [obstacle spot]
     (let [x (.-x (:location obstacle))
           y (.-y (:location obstacle))
           w (:w obstacle)
@@ -111,7 +110,7 @@
     (q/stroke 0)
     (q/fill 175)
     (q/stroke-weight 2)
-    (q/rect-mode :center)
+    (q/rect-mode :corner)
     (let [x (.-x (:location obstacle))
           y (.-y (:location obstacle))
           w (:w obstacle)
@@ -185,23 +184,21 @@
     (q/pop-matrix)))
 
 (defn gen-rocket
-  [& {:keys [id mass location velocity acceleration r fitness dna gene-counter min-d hit-target] 
+  [& {:keys [id mass location velocity acceleration r fitness dna gene-counter min-d hit-obstacle hit-target] 
       :or {id "rx" mass 1.0 location (PVector. 0 0) velocity (PVector. 0 0) acceleration (PVector. 0 0) 
-           r (params :rocket-r) fitness 0 dna [] gene-counter 0 min-d Integer/MAX_VALUE hit-target false}}] 
-  (Rocket. id mass location velocity acceleration r fitness dna gene-counter min-d hit-target))
+           r (params :rocket-r) fitness 0 dna [] gene-counter 0 min-d Integer/MAX_VALUE hit-obstacle false hit-target false}}] 
+  (Rocket. id mass location velocity acceleration r fitness dna gene-counter min-d hit-obstacle hit-target))
 
 ; TODO fitness-funktion zurück nach einfach, min-d entfernen ?
 (defn fitness [rocket target]
   (if (:hit-target rocket)
     ; hit-target -> fitness-criterium = how-fast
     (let [how-fast (Math/pow (- (params :lifetime) (:gene-index rocket)) 2)] 
-      (dbg how-fast)
       (assoc rocket :fitness how-fast)) 
     ; didn't hit-target -> fitness-criterium = how-near
     (let [d (q/dist (.-x (:location rocket)) (.-y (:location rocket)) (.-x target) (.-y target))
           min-d (min (:min-d rocket) d)
           how-near (Math/pow (/ 1 min-d) 2)]
-      (dbg how-near)
       (assoc rocket :fitness how-near))))
 
 ;; TODO optimierbar
@@ -212,15 +209,13 @@
         next-min-d (min (:min-d rocket d))]
     (assoc rocket :hit-target next-hit-target :min-d next-min-d)))
 
-(defn obstacles-contain? [rocket obstacles]
-  (reduce #(or ) false (contains obstacles) hier war ich !!!
-
 ;; TODO optimierbar
-(defn check-obstacles [rocket obstacles] 
-  ; TODO ? if (:hit-target rocket)
-  (if-let [next-hit-obstacle (obstacles-contain? rocket obstacles)]
-     (assoc rocket :hit-obstacle next-hit-obstacle)
-     rocket)) 
+(defn check-obstacles [rocket obstacles]
+  ; TODO ? if (:hit-obstacle rocket)
+  (let [next-hit-obstacle (reduce 
+                           #(or %1 (contains? %2 (:location rocket))) 
+                           false obstacles)]
+    (assoc rocket :hit-obstacle next-hit-obstacle)))
 
 ;;
 ;; Population
@@ -242,10 +237,13 @@
              :dna  (random-dna (params :lifetime)))
           (range rocket-count))))
 
-(defn move-and-check-rockets [population target obstacles]
+(defn next-rockets-state [population obstacles target]
   (let [next-rockets (into []
                            (map 
-                             #(-> % (move) (check-target target) (check-obstacles obstacles)) 
+                             #(-> %
+                                (check-obstacles obstacles)
+                                (check-target target)
+                                (move))
                              (:rockets population)))] 
     (assoc population :rockets next-rockets)))
 
@@ -262,17 +260,12 @@
     (repeat n rocket)))
 
 (defn gen-mating-pool [rockets max-fitness]
-  (vec 
-    (apply 
-      concat 
-      (map 
-        #(dup-rockets % max-fitness) rockets))))
+  (vec (apply concat (map #(dup-rockets % max-fitness) rockets))))
 
 (defn populate-mating-pool [population]
   (let [rockets (:rockets population)
         max-fitness (:fitness (apply max-key :fitness rockets))
         next-mating-pool (gen-mating-pool rockets max-fitness)]
-    (dbg max-fitness)
     (assoc population :mating-pool next-mating-pool)))
 
 (defn combine-two-rockets [rocket-index rocket1 rocket2]
@@ -298,7 +291,7 @@
 
 (defn reproduce-rockets [rockets-count mating-pool mutation-rate]
   (into [] 
-        (r/map  ; clojure.core.reducers/map -> fork-join
+        (map  
                #(reproduce-rocket % mating-pool mutation-rate) 
                (range rockets-count)))) 
 
@@ -317,18 +310,24 @@
 ;; World
 ;;
 
-(defrecord World [population target obstacles life-count])
+(defrecord World [population obstacles target life-count])
 
 (defn gen-world 
-  [& {:keys [population target obstacles life-count] 
-      :or {population nil target (PVector. 0 0) obstacles [] life-count 0}}] 
-  (World. population target obstacles life-count)) 
+  [& {:keys [population obstacles target life-count] 
+      :or {population nil obstacles [] target (PVector. 0 0) life-count 0}}] 
+  (World. population obstacles target life-count)) 
 
 (def world (atom {}))  
 
 ;;
 ;; Sketch
 ;;
+
+(defn gen-obstacles [w h]
+  (let [x (- (/ (size-x) 2) (/ w 2))
+        y (- (/ (size-y) 2) (/ h 2))
+        location (PVector. x y)]
+    (vector (gen-obstacle :location location :w w :h h))))  
 
 (defn setup-sketch []
   (q/frame-rate (params :frame-rate))
@@ -338,9 +337,9 @@
   (let [rockets (gen-random-rockets (params :rocket-count))
         mutation-rate (params :mutation-rate)
         population (gen-population :mutation-rate mutation-rate :rockets rockets)
-        target (PVector. (/ (size-x) 2) (params :target-r))
-        obstacles (vector (gen-obstacle :location (PVector. (/ (size-x) 2) (/ (size-y) 2)) :w (params :obstacle-w) :h (params :obstacle-h)))]
-    (swap! world (constantly (gen-world :population population :target target :obstacles obstacles :life-count 0)))))
+        obstacles (gen-obstacles (params :obstacle-w) (params :obstacle-h))
+        target (PVector. (/ (size-x) 2) (params :target-r))]
+    (swap! world (constantly (gen-world :population population :obstacles obstacles :target target :life-count 0)))))
 
 (defn draw-sketch []
   ; draw Background
@@ -366,7 +365,7 @@
     ; state-progression 
     (if (< life-count (params :lifetime))
       ; next step in current populations life
-      (let [next-population (move-and-check-rockets population target)
+      (let [next-population (next-rockets-state population obstacles target)
             next-life-count (inc life-count)]
         (swap! world assoc :population next-population :life-count next-life-count))
       ; next generation
@@ -384,9 +383,10 @@
 (defn mouse-pressed [] 
   (swap! world assoc :target (PVector. (q/mouse-x) (q/mouse-y))))
 
-(q/defsketch smart-rockets-superbasic 
-  :title "Rockets adapt behavior to environment by applying genetic algorithm"
-  :setup setup-sketch
-  :draw draw-sketch
-  :mouse-pressed mouse-pressed
-  :size (params :size))
+(defn run []
+	(q/defsketch smart-rockets-superbasic 
+	  :title "Rockets adapt behavior to environment by applying genetic algorithm"
+	  :setup setup-sketch
+	  :draw draw-sketch
+	  :mouse-pressed mouse-pressed
+	  :size (params :size)))

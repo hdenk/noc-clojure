@@ -36,8 +36,10 @@
   (q/rect (:x @walker), (:y @walker), (params :rect-width), (params :rect-height))
   (walk walker))
 
-(q/defsketch random-walk
-  :title "random-walk"
-  :setup setup
-  :draw draw
-  :size (params :size))
+(defn run []
+	(q/defsketch random-walk
+	  :title "random-walk"
+	  :target :none
+	  :setup setup
+	  :draw draw
+	  :size (params :size)))

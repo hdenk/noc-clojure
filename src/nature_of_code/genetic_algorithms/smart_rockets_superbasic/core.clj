@@ -1,7 +1,13 @@
 (ns nature-of-code.genetic-algorithms.smart-rockets-superbasic.core
-  (:require [clojure.core.reducers :as r])
   (:require [quil.core :as q])
   (:import [processing.core PVector]))
+
+(defmacro dbg
+  "print debug-infos to console"
+  [x] 
+  `(let 
+     [x# ~x] 
+     (println "dbg:" '~x "=" x#) x#)) 
 
 (def params ^{:doc "DataStructure representing Params to customize the app"} 
   {:size [600 400]
@@ -242,7 +248,7 @@
 
 (defn reproduce-rockets [rockets-count mating-pool mutation-rate]
   (into [] 
-        (r/map  ; clojure.core.reducers/map -> fork-join
+        (map  
                #(reproduce-rocket % mating-pool mutation-rate) 
                (range rockets-count)))) 
 
@@ -323,9 +329,11 @@
 (defn mouse-pressed [] 
   (swap! world assoc :target (PVector. (q/mouse-x) (q/mouse-y))))
 
-(q/defsketch smart-rockets-superbasic 
-  :title "Rockets adapt behavior to environment by applying genetic algorithm"
-  :setup setup-sketch
-  :draw draw-sketch
-  :mouse-pressed mouse-pressed
-  :size (params :size))
+(defn run []
+	(q/defsketch smart-rockets-superbasic 
+	  :title "Rockets adapt behavior to environment by applying genetic algorithm"
+	  :target :none
+	  :setup setup-sketch
+	  :draw draw-sketch
+	  :mouse-pressed mouse-pressed
+	  :size (params :size)))

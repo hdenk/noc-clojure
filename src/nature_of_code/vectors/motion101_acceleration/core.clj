@@ -74,9 +74,10 @@
   (q/fill 127)
   (q/ellipse (.-x (:location @mover)) (.-y (:location @mover)) (params :mover-rx) (params :mover-ry)))
 
-(q/defsketch motion101-acceleration
-  :title "motion-controll by acceleration"
-  :setup setup
-  :draw draw
-  :size (params :size))
-
+(defn run []
+	(q/defsketch motion101-acceleration
+	  :title "motion-controll by acceleration"
+	  :target :none
+	  :setup setup
+	  :draw draw
+	  :size (params :size)))

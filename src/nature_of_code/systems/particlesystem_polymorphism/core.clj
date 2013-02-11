@@ -176,8 +176,10 @@
          (apply-force gravity) 
          (move)))))
 
-(q/defsketch particlesystem-polymorphism 
-  :title "Particle-System produces Particles that experience Gravity"
-  :setup setup-sketch
-  :draw draw-sketch
-  :size (params :size))
+(defn run []
+	(q/defsketch particlesystem-polymorphism 
+	  :title "Particle-System produces Particles that experience Gravity"
+	  :target :none
+	  :setup setup-sketch
+	  :draw draw-sketch
+	  :size (params :size)))

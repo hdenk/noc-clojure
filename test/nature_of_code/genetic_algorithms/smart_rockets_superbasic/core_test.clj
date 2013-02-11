@@ -132,7 +132,7 @@
         (pos? ; greater than zero
           (get-in
             (let [test-world (gen-test-world)]
-              (smart-rockets/calc-fitness (:population test-world) (:target test-world)))
+              (smart-rockets/calc-rocket-fitness (:population test-world) (:target test-world)))
             [:rockets 0 :fitness]))))
     (testing 
       "populate-mating-pool"

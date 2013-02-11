@@ -101,10 +101,11 @@
           (alter-var-root (var *reset-movers*) (fn [_] false)))
       (dorun (map render mover-seq))))) ; dorun returns nil
 
-(q/defsketch fluidresistance
-  :title "Bodies experience gravity and fluid resistance"
-  :setup setup
-  :draw (gen-draw-fn)
-  :size (params :size)
-  :mouse-pressed mouse-pressed)
-
+(defn run []
+	(q/defsketch fluidresistance
+	  :title "Bodies experience gravity and fluid resistance"
+	  :target :none
+	  :setup setup
+	  :draw (gen-draw-fn)
+	  :size (params :size)
+	  :mouse-pressed mouse-pressed))

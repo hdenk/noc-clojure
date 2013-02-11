@@ -30,7 +30,7 @@
         (= 
           (PVector. 0 0) 
           (:acceleration
-            (ps/next-state (gen-particle :acceleration (PVector. 0.1 0.2))))))
+            (ps/particle-next-state (gen-particle :acceleration (PVector. 0.1 0.2))))))
       (is
         (= 
           {:lifespan 98.0}  
@@ -61,4 +61,4 @@
           (ps/expired? (gen-particle :lifespan 0.0))))
       (is 
         (true?
-          (ps/expired? (gen-particle :lifespan -1.0))))))
+          (ps/expired? (gen-particle :lifespan -1.0)))))))

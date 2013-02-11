@@ -73,9 +73,11 @@
 (defn mouse-pressed [] 
   (swap! board assoc :cells (random-initial-cells (:rows @board) (:columns @board))))
 
-(q/defsketch conways-game-of-life 
-  :title "implementation of conways game of life"
-  :setup setup-sketch
-  :draw draw-sketch
-  :mouse-pressed mouse-pressed
-  :size (params :size))
+(defn run []
+	(q/defsketch conways-game-of-life 
+	  :title "implementation of conways game of life"
+	  :target :none
+	  :setup setup-sketch
+	  :draw draw-sketch
+	  :mouse-pressed mouse-pressed
+	  :size (params :size)))
