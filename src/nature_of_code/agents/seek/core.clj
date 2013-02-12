@@ -1,4 +1,6 @@
 (ns nature-of-code.agents.seek.core
+  "Primitive Agent steers towards Target 
+  Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
   (:require [quil.core :as q])
   (:import [processing.core PVector]))
 

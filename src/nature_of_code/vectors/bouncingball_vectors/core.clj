@@ -1,5 +1,6 @@
 (ns nature-of-code.vectors.bouncingball-vectors.core
-  "Example 1-2: Bouncing Ball, with PVector!"
+  "Example 1-2: Bouncing Ball, with PVector!
+	 Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
   (:require [quil.core :as q])
   (:import [processing.core PVector]))
 

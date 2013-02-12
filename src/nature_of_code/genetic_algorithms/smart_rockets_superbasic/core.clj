@@ -1,4 +1,6 @@
 (ns nature-of-code.genetic-algorithms.smart-rockets-superbasic.core
+	"Rockets adapt behavior to environment by applying genetic algorithm
+	 Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
   (:require [quil.core :as q])
   (:import [processing.core PVector]))
 

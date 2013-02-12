@@ -1,5 +1,6 @@
 (ns nature-of-code.introduction.random-distribution.core
-  "visualize distribution of random numbers"
+  "visualize distribution of random number
+	 Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
   (:require [quil.core :as q]))
 
 (def params 

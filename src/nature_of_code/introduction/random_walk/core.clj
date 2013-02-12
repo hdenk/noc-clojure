@@ -1,5 +1,6 @@
 (ns nature-of-code.introduction.random-walk.core
-  "Random Walker (No Vectors)"
+  "Random Walker (No Vectors)
+	 Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
   (:require [quil.core :as q]))
 
 (def params 

@@ -1,6 +1,8 @@
 (ns nature-of-code.systems.particlesystem-forces.core
+  "Particle-System produces Particles that experience Gravity
+	 Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
   (:require [quil.core :as q])
-  (:import [processing.core PVector]))
+    (:import [processing.core PVector]))
 
 (def params 
   {:size [600 400]

@@ -1,7 +1,8 @@
 (ns nature-of-code.forces.fluidresistance.core
   "Demonstration of multiple force acting on bodies (Mover class)
    Bodies experience gravity continuously
-   Bodies experience fluid resistance when in water"
+   Bodies experience fluid resistance when in water
+   Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
    (:require [quil.core :as q])
    (:import [processing.core PVector]))
 

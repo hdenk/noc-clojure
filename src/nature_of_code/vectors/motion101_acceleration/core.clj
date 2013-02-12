@@ -1,83 +1,62 @@
 (ns nature-of-code.vectors.motion101-acceleration.core
   "Demonstration of the basics of motion with vector.
   A 'Mover' object stores location, velocity, and acceleration as vectors
-  The motion is controlled by affecting the acceleration (in this case towards the mouse)"
-  (:require [quil.core :as q])
-  (:import [processing.core PVector]))
+  The motion is controlled by affecting the acceleration (in this case towards the mouse) 
+  Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
+  (:require [quil.core :as qc])
+  (:use [nature-of-code.math.vector :as mv]))
 
 (def params 
-  {:size [800 200]
+  {:size-x 800 
+   :size-y 200
    :background 255
    :frame-rate 30
-   :mover-x 100
-   :mover-y 100
-   :mover-rx 48
-   :mover-ry 48
-   :speed-x 0
-   :speed-y 0
+   :mover-r 48
+   :mover-color 127
+   :initial-speed-x 0
+   :initial-speed-y 0
    :topspeed 5
-   :acceleration 0.2})
+   :acceleration-rate 0.2})
 
-(def mover
-  (let [location (PVector. (params :mover-x) (params :mover-y))
-        velocity (PVector. (params :speed-x) (params :speed-y))]
-    (atom { :location location :velocity velocity })))
+(defn init-mover [width height m]
+  (-> (assoc-in m [:location] [(/ width 2.0) (/ height 2.0)])
+      (assoc-in [:velocity] [(params :initial-speed-x) (params :initial-speed-y)])))
 
-(defn setup []
-  (q/frame-rate (params :frame-rate))
-  (q/background (params :background))
-  (q/smooth))
+(defn initialize [m-atom width height]
+  (swap! m-atom (partial init-mover width height)))
 
-(defn update-velocity [mover acceleration]
-  (swap! 
-    mover 
-    update-in 
-    [:velocity] 
-    #(let [velocity (PVector/add %1 %2)] 
-       ; Limit the velocity by topspeed
-       (.limit velocity (params :topspeed)) ; Seiteneffekt !
-       velocity)
-    acceleration)
-  mover)
+(defn update-mover [m]
+  (let [mouse [(qc/mouse-x) (qc/mouse-y)]
+        acc (mv/subtract mouse (:location m))
+        acc (mv/set-magnitude (params :acceleration-rate) acc)]
+   (-> (update-in m [:velocity] #(mv/add % acc))
+       (update-in [:location] #(mv/add % (:velocity m)))
+       (update-in [:velocity] #(mv/limit (:top-speed m) %)))))
 
-(defn update-location [mover]
-  (swap! 
-    mover 
-    update-in 
-    [:location] 
-    #(PVector/add %1 %2) 
-    (:velocity @mover))
-  mover)
+(defn update [m-atom]
+  (swap! m-atom update-mover))
 
-(defn move-to [mover x y]
-  ; Velocity changes according to acceleration
-  (let [; Compute a vector that points from mover to target
-        target-v (PVector/sub (PVector. x y) (:location @mover))
-        target-nv (do (.normalize target-v) target-v) ; Seiteneffekt !
-        ; Set magnitude of acceleration
-        acceleration (PVector/mult target-nv (float (params :acceleration)))]
-    (update-velocity mover acceleration))
+(defn display [m]
+  (qc/stroke 0)
+  (qc/stroke-weight 2)
+  (qc/fill (params :mover-color) 100)
+  (apply #(qc/ellipse %1 %2 (params :mover-r) (params :mover-r)) (:location m)))
 
-  ; Location changes by velocity
-  (update-location mover)) 
+(def mover (atom {:location []
+                  :velocity []
+                  :top-speed (params :topspeed)}))
 
-(defn draw []
-  (q/no-stroke)
-  (q/fill 255 100)
-  (q/rect 0 0 (q/width) (q/height))
+(defn setup-sketch []
+  (initialize mover (params :size-x) (params :size-y)))
 
-  (move-to mover (q/mouse-x) (q/mouse-y))
-
-  ; Display mover at its location
-  (q/stroke 0)
-  (q/stroke-weight 2)
-  (q/fill 127)
-  (q/ellipse (.-x (:location @mover)) (.-y (:location @mover)) (params :mover-rx) (params :mover-ry)))
+(defn draw-sketch []
+  (qc/background 255)
+  (update mover)
+  (display @mover))
 
 (defn run []
-	(q/defsketch motion101-acceleration
-	  :title "motion-controll by acceleration"
-	  :target :none
-	  :setup setup
-	  :draw draw
-	  :size (params :size)))
+  (qc/defsketch what-is-a-force
+    :title "motion-controll by acceleration"
+    :setup setup-sketch
+    :draw draw-sketch
+    :size [(params :size-x) (params :size-y)]))

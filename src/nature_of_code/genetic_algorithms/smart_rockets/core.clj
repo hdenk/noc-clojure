@@ -1,6 +1,8 @@
 (ns nature-of-code.genetic-algorithms.smart-rockets.core
-  (:require [quil.core :as q])
-  (:import [processing.core PVector]))
+	"Rockets adapt behavior to environment by applying genetic algorithm
+	 Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
+	(:require [quil.core :as q])
+	  (:import [processing.core PVector]))
 
 (defmacro dbg
   "print debug-infos to console"

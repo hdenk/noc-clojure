@@ -1,4 +1,6 @@
 (ns nature-of-code.cellular-automata.game-of-life.core
+  "Implementation of conways game of life  
+  Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
   (:require [quil.core :as q])
   (:import [processing.core PVector]))
 
@@ -75,7 +77,7 @@
 
 (defn run []
 	(q/defsketch conways-game-of-life 
-	  :title "implementation of conways game of life"
+	  :title "Implementation of conways game of life"
 	  :target :none
 	  :setup setup-sketch
 	  :draw draw-sketch
