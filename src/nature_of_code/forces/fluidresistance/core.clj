@@ -28,14 +28,14 @@
 ;;;
 
 (defrecord Fluid [id x y width height color drag-coefficient])
-  
+
 (defn contains-mover? 
   "takes a fluid and a mover and returns true, if the mover is inside the fluid" 
-  [{:keys [x y width height]} {mover-location :location}]
-  (let [[mover-x mover-y] mover-location]
+  [{:keys [x y width height]} {:keys [location]}]
+  (let [[mover-x mover-y] location]
     (if (and 
-          (> mover-x x) (< mover-x (+ x width)) 
-          (> mover-y y) (< mover-y (+ y height))) 
+          (>= mover-x x) (<= mover-x (+ x width)) 
+          (>= mover-y y) (<= mover-y (+ y height))) 
       true
       false)))                                                                  
 
