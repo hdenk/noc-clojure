@@ -48,6 +48,7 @@
 
 (defn setup-sketch []
   (qc/frame-rate (params :frame-rate))
+  (qc/smooth) ; anti aliasing on
   (init-mover mover (params :size-x) (params :size-y)))
 
 (defn draw-sketch []
