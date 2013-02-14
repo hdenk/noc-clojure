@@ -18,25 +18,25 @@
    :topspeed 5
    :acceleration-rate 0.2})
 
-(defn init-mover [width height m]
+(defn do-init-mover [width height m]
   (-> (assoc-in m [:location] [(/ width 2.0) (/ height 2.0)])
       (assoc-in [:velocity] [(params :initial-speed-x) (params :initial-speed-y)])))
 
-(defn initialize [m-atom width height]
-  (swap! m-atom (partial init-mover width height)))
+(defn init-mover [m-atom width height]
+  (swap! m-atom (partial do-init-mover width height)))
 
-(defn update-mover [m]
+(defn do-update-mover [m]
   (let [mouse [(qc/mouse-x) (qc/mouse-y)]
         acc (mv/subtract mouse (:location m))
-        acc (mv/set-magnitude (params :acceleration-rate) acc)]
+        acc (mv/set-magnitude acc (params :acceleration-rate))]
    (-> (update-in m [:velocity] #(mv/add % acc))
        (update-in [:location] #(mv/add % (:velocity m)))
-       (update-in [:velocity] #(mv/limit (:top-speed m) %)))))
+       (update-in [:velocity] #(mv/limit % (:top-speed m))))))
 
-(defn update [m-atom]
-  (swap! m-atom update-mover))
+(defn update-mover [m-atom]
+  (swap! m-atom do-update-mover))
 
-(defn display [m]
+(defn draw-mover [m]
   (qc/stroke 0)
   (qc/stroke-weight 2)
   (qc/fill (params :mover-color) 100)
@@ -47,15 +47,16 @@
                   :top-speed (params :topspeed)}))
 
 (defn setup-sketch []
-  (initialize mover (params :size-x) (params :size-y)))
+  (qc/frame-rate (params :frame-rate))
+  (init-mover mover (params :size-x) (params :size-y)))
 
 (defn draw-sketch []
-  (qc/background 255)
-  (update mover)
-  (display @mover))
+  (qc/background (params :background))
+  (update-mover mover)
+  (draw-mover @mover))
 
-(defn run []
-  (qc/defsketch what-is-a-force
+(defn run-sketch []
+  (qc/defsketch motion-101
     :title "motion-controll by acceleration"
     :setup setup-sketch
     :draw draw-sketch
