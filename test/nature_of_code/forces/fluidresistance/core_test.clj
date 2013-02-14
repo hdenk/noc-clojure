@@ -1,65 +1,78 @@
 (ns nature-of-code.forces.fluidresistance.core-test
   (:use clojure.test)
-  (:require 
-    [quil.core :as q]
-    [nature-of-code.test-utils :as test-utils]
-    [nature-of-code.forces.fluidresistance.core :as fluid-resistance])
-  (:import 
-    [processing.core PVector]
-    [nature_of_code.forces.fluidresistance.core Mover Fluid]))
+  (:require [quil.core :as qc]
+            [nature-of-code.test-utils :as test-utils]
+            [nature-of-code.forces.fluidresistance.core :as fluid-resistance])
+  (:import [nature_of_code.forces.fluidresistance.core Mover Fluid]))
 
-(deftest test-mover
-  (with-redefs [fluid-resistance/params {}] ; to avoid unintended dependencies in params
-    (testing 
-      "move"
-      (is 
-        (= (Mover. "m1" 2.0 (PVector. 1 1.1) (PVector. 0.1 0.1) (PVector. 0 0) 127)
-           (let [m (Mover. "m1" 2.0 (PVector. 1 1) (PVector. 0.0 0.1) (PVector. 0.1 0) 127)]
-             (fluid-resistance/move m)))))
-    (testing 
-      "apply-force"
-      (is 
-        (= (Mover. "m1" 2.0 (PVector. 1 1) (PVector. 0.0 0.1) (PVector. 0.1 0.1) 127)
-           (let [m (Mover. "m1" 2.0 (PVector. 1 1) (PVector. 0.0 0.1) (PVector. 0 0.1) 127)]
-             (fluid-resistance/apply-force m (PVector. 0.2 0))))))
-    (testing 
-      "check-edges"
-      (with-redefs-fn 
-        {#'q/height (constantly 400)} ; check-edges calls q/height -> stub it !      
-        #(is 
-           (= (Mover. "m1" 2.0 (PVector. 600 400) (PVector. -0.9 -0.9) (PVector. 0 0) 127)
-              (let [m (Mover. "m1" 2.0 (PVector. 600 411) (PVector. 1 1) (PVector. 0 0) 127)]
-                (fluid-resistance/check-edges m))))))))
+(defn gen-fluid 
+  [& {:keys [id x y width height color drag-coefficient] 
+      :or {id "fx" x 0 y 0 width 0 height 0 color 0 drag-coefficient 0}}] 
+  (Fluid. id x y width height color drag-coefficient)) 
 
-(deftest test-fluid
+(defn gen-mover 
+  [& {:keys [id mass location velocity acceleration color] 
+      :or {id "mx" mass 0 location [0 0] velocity [0 0] acceleration [0 0] color 0}}] 
+  (Mover. id mass location velocity acceleration color)) 
+
+(deftest fluid
   (with-redefs [fluid-resistance/params {}] ; to avoid unintended dependencies in params
     (testing 
       "contains-mover?"
       (is 
-        (= false
-           (let [f (Fluid. "f1" 0 0 600 400 127 1.0)
-                 m (Mover. "m1" 2.0 (PVector. 0 0) (PVector. 0.0 0.1) (PVector. 0 0.1) 127)]
-             (fluid-resistance/contains-mover? f m))))
+        (= 
+          false
+           (let [fluid (gen-fluid :width 600 :height 400)
+                 mover (gen-mover :location [-1 -1])]
+             (fluid-resistance/contains-mover? fluid mover))))
       (is 
-        (= true
-           (let [f (Fluid. "f1" 0 0  600 400 127 1.0)
-                 m (Mover. "m1" 2.0 (PVector. 1 1) (PVector. 0.0 0.1) (PVector. 0 0.1) 127)]
-             (fluid-resistance/contains-mover? f m))))
+        (= 
+          true
+           (let [fluid (gen-fluid :width 600 :height 400)
+                 mover (gen-mover :location [0 0])]
+             (fluid-resistance/contains-mover? fluid mover))))
       (is 
-        (= true
-           (let [f (Fluid. "f1" 0 0 600 400 127 1.0)
-                 m (Mover. "m1" 2.0 (PVector. 599 399) (PVector. 0.0 0.1) (PVector. 0 0.1) 127)]
-             (fluid-resistance/contains-mover? f m))))
+        (= 
+          true
+           (let [fluid (gen-fluid :width 600 :height 400)
+                 mover (gen-mover :location [300 200])]
+             (fluid-resistance/contains-mover? fluid mover))))
       (is 
-        (= false
-           (let [f (Fluid. "f1" 0 0 600 400 127 1.0)
-                 m (Mover. "m1" 2.0 (PVector. 600 400) (PVector. 0.0 0.1) (PVector. 0 0.1) 127)]
-             (fluid-resistance/contains-mover? f m)))))
+        (= 
+          true
+           (let [fluid (gen-fluid :width 600 :height 400)
+                 mover (gen-mover :location [600 400])]
+             (fluid-resistance/contains-mover? fluid mover))))
+      (is 
+        (= 
+          false
+           (let [fluid (gen-fluid :width 600 :height 400)
+                 mover (gen-mover :location [601 401])]
+             (fluid-resistance/contains-mover? fluid mover)))))
     (testing 
       "drag-force"
       (is 
-        (test-utils/pvector-close-to 
-          (PVector. -20 -15) ; Wurzel aus (20*20)+(15*15)=25
-          (let [f (Fluid. "f1" 0 0  600 400 127 1.0)
-                m (Mover. "m1" 2.0 (PVector. 1 1) (PVector. 4 3) (PVector. 0 0) 127)]
-            (fluid-resistance/drag-force f m)))))))
+        (= 
+          [-20.0 -15.0] ; Wurzel aus (20*20)+(15*15)=25
+           (let [fluid (gen-fluid :width 600 :height 400 :drag-coefficient 1.0)
+                 mover (gen-mover :location [200 100] :velocity [4 3])]
+             (fluid-resistance/drag-force fluid mover))))
+      (is 
+        (= 
+          [0 0] ; not in fluid -> no force
+           (let [fluid (gen-fluid :width 600 :height 400 :drag-coefficient 1.0)
+                 mover (gen-mover :location [-1 -1] :velocity [4 3])]
+             (fluid-resistance/drag-force fluid mover)))))))
+
+(deftest mover
+  (with-redefs [fluid-resistance/params {:r-factor 1} ; check-edges depends on (params :r-factor)
+                qc/height (constantly 400)] ; and an gc/height 
+    (testing 
+      "update-mover"
+      (is 
+        (= 
+         [301 202]
+         (:location
+	         (let [fluid (gen-fluid :width 600 :height 400 :drag-coefficient 1.0)
+	              mover (gen-mover :mass 1 :location [300 200] :velocity [1 2])]
+	           (fluid-resistance/update-mover mover fluid))))))))
