@@ -19,20 +19,20 @@
   (let [m (magnitude v)]
     (vec (map #(/ % m) v))))
 
-(defn multiply [scalar v]
+(defn multiply [v scalar ]
   (vec (map * (repeat scalar) v)))
 
 (defn divide [v scalar]
   (vec (map / v (repeat scalar))))
 
-(defn limit [upper v]
+(defn limit [v upper]
   (let [m (magnitude v)]
     (if (> m upper)
-      (multiply upper (normalize v))
+      (multiply (normalize v)  upper)
       v)))
 
-(defn set-magnitude [mag v]
-  (multiply mag (normalize v)))
+(defn set-magnitude [v mag]
+  (multiply (normalize v) mag ))
 
 (defn random-2d []
   (normalize [(- (rand 2) 1.0) (- (rand 2) 1.0)]))

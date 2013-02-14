@@ -46,7 +46,7 @@
       "multiply"
       (is 
         (= [2 4 8]
-           (vector/multiply 2 [1 2 4])))))
+           (vector/multiply [1 2 4] 2)))))
 
 (deftest divide
     (testing 
@@ -60,14 +60,14 @@
       "limit"
       (is 
         (= [3 4]
-           (vector/limit 5 [6 8])))))
+           (vector/limit [6 8] 5)))))
 
 (deftest set-magnitude
     (testing 
       "set-magnitude"
       (is 
         (= [3 4]
-           (vector/set-magnitude 5 [1 4/3])))))
+           (vector/set-magnitude [1 4/3] 5)))))
 (defmacro dbg
   "print debug-infos to console"
   [x] 
