@@ -162,7 +162,7 @@
 (defn draw []
   ; draw Background
   (q/no-stroke)
-  (q/fill 255) 
+  (q/fill (params :background)) 
   (q/rect 0 0 (q/width) (q/height))
 
   ; draw fluid
