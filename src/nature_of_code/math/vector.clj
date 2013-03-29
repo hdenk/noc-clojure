@@ -36,3 +36,7 @@
 
 (defn random-2d []
   (normalize [(- (rand 2) 1.0) (- (rand 2) 1.0)]))
+
+(defn heading-2d [v]
+  (let [angle (Math/atan2 (* (second v) -1) (first v))]
+    (* angle -1)))
