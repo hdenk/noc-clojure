@@ -22,47 +22,47 @@
       (is 
         (= 
           false
-           (let [fluid (gen-fluid :width 600 :height 400)
-                 mover (gen-mover :location [-1 -1])]
-             (fluid-resistance/contains-mover? fluid mover))))
+          (let [fluid (gen-fluid :width 600 :height 400)
+                mover (gen-mover :location [-1 -1])]
+            (fluid-resistance/contains-mover? fluid mover))))
       (is 
         (= 
           true
-           (let [fluid (gen-fluid :width 600 :height 400)
-                 mover (gen-mover :location [0 0])]
-             (fluid-resistance/contains-mover? fluid mover))))
+          (let [fluid (gen-fluid :width 600 :height 400)
+                mover (gen-mover :location [0 0])]
+            (fluid-resistance/contains-mover? fluid mover))))
       (is 
         (= 
           true
-           (let [fluid (gen-fluid :width 600 :height 400)
-                 mover (gen-mover :location [300 200])]
-             (fluid-resistance/contains-mover? fluid mover))))
+          (let [fluid (gen-fluid :width 600 :height 400)
+                mover (gen-mover :location [300 200])]
+            (fluid-resistance/contains-mover? fluid mover))))
       (is 
         (= 
           true
-           (let [fluid (gen-fluid :width 600 :height 400)
-                 mover (gen-mover :location [600 400])]
-             (fluid-resistance/contains-mover? fluid mover))))
+          (let [fluid (gen-fluid :width 600 :height 400)
+                mover (gen-mover :location [600 400])]
+            (fluid-resistance/contains-mover? fluid mover))))
       (is 
         (= 
           false
-           (let [fluid (gen-fluid :width 600 :height 400)
-                 mover (gen-mover :location [601 401])]
-             (fluid-resistance/contains-mover? fluid mover)))))
+          (let [fluid (gen-fluid :width 600 :height 400)
+                mover (gen-mover :location [601 401])]
+            (fluid-resistance/contains-mover? fluid mover)))))
     (testing 
       "drag-force"
       (is 
         (= 
           [-20.0 -15.0] ; Wurzel aus (20*20)+(15*15)=25
-           (let [fluid (gen-fluid :width 600 :height 400 :drag-coefficient 1.0)
-                 mover (gen-mover :location [200 100] :velocity [4 3])]
-             (fluid-resistance/drag-force fluid mover))))
+          (let [fluid (gen-fluid :width 600 :height 400 :drag-coefficient 1.0)
+                mover (gen-mover :location [200 100] :velocity [4 3])]
+            (fluid-resistance/drag-force fluid mover))))
       (is 
         (= 
           [0 0] ; not in fluid -> no force
-           (let [fluid (gen-fluid :width 600 :height 400 :drag-coefficient 1.0)
-                 mover (gen-mover :location [-1 -1] :velocity [4 3])]
-             (fluid-resistance/drag-force fluid mover)))))))
+          (let [fluid (gen-fluid :width 600 :height 400 :drag-coefficient 1.0)
+                mover (gen-mover :location [-1 -1] :velocity [4 3])]
+            (fluid-resistance/drag-force fluid mover)))))))
 
 (deftest mover
   (with-redefs [fluid-resistance/params {:r-factor 1} ; check-edges depends on (params :r-factor)
@@ -71,8 +71,8 @@
       "update-mover"
       (is 
         (= 
-         [301 202]
-         (:location
-	         (let [fluid (gen-fluid :width 600 :height 400 :drag-coefficient 1.0)
-	              mover (gen-mover :mass 1 :location [300 200] :velocity [1 2])]
-	           (fluid-resistance/update-mover mover fluid))))))))
+          [301 202]
+          (:location
+            (let [fluid (gen-fluid :width 600 :height 400 :drag-coefficient 1.0)
+                  mover (gen-mover :mass 1 :location [300 200] :velocity [1 2])]
+              (fluid-resistance/update-mover mover fluid))))))))

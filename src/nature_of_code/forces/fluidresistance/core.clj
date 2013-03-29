@@ -1,8 +1,8 @@
 (ns nature-of-code.forces.fluidresistance.core
   "Demonstration of multiple force acting on bodies (Mover class)
-   Bodies experience gravity continuously
-   Bodies experience fluid resistance when in water
-   Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
+  Bodies experience gravity continuously
+  Bodies experience fluid resistance when in water
+  Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
   (:require [quil.core :as qc])
   (:use [nature-of-code.math.vector :as mv]))
 
@@ -43,19 +43,19 @@
   "takes a fluid and a mover and returns drag-force" 
   [{:keys [drag-coefficient] :as fluid} {:keys [velocity] :as mover}] 
   (if (contains-mover? fluid mover)
-	  (let [speed (mv/magnitude velocity)
-	        drag-magnitude (* drag-coefficient speed speed)
-	        drag-force (mv/multiply velocity (float -1))] 
-	    (-> (mv/normalize drag-force)
-	        (mv/multiply (float drag-magnitude))))
+    (let [speed (mv/magnitude velocity)
+          drag-magnitude (* drag-coefficient speed speed)
+          drag-force (mv/multiply velocity (float -1))] 
+      (-> (mv/normalize drag-force)
+          (mv/multiply (float drag-magnitude))))
     [0 0]))
 
 (defn draw-fluid
   [{:keys [x y width height color] :as fluid}]
-    (qc/no-stroke)
-    (qc/fill color)
-    (qc/rect x y width height)
-    fluid)
+  (qc/no-stroke)
+  (qc/fill color)
+  (qc/rect x y width height)
+  fluid)
 
 (defn make-fluid []
   (map->Fluid 
@@ -73,10 +73,10 @@
   "takes a mover and a force, applies the force and returns a mover with changed acceleration"
   ; Newton's 2nd law: F = M * A
   ; or A = F / M"
-	(let [f (mv/divide force (float mass))
-	      next-acceleration (mv/add acceleration f)]
-	  (assoc mover :acceleration next-acceleration)))
- 
+  (let [f (mv/divide force (float mass))
+        next-acceleration (mv/add acceleration f)]
+    (assoc mover :acceleration next-acceleration)))
+
 (defn apply-gravity [mover]
   ; Gravity is scaled by mass here!
   (let [gravity [0 (* 0.1 (:mass mover))]]
@@ -84,11 +84,11 @@
 
 (defn update-motion-state 
   "takes a mover and force returns a mover with updated motion-state"
-   [{:keys [location velocity acceleration] :as mover}]
-    (let [next-location (mv/add location velocity)
-          next-velocity (mv/add velocity acceleration)
-          next-acceleration (mv/multiply acceleration (float 0))]
-      (assoc mover :location next-location :velocity next-velocity :acceleration next-acceleration)))
+  [{:keys [location velocity acceleration] :as mover}]
+  (let [next-location (mv/add location velocity)
+        next-velocity (mv/add velocity acceleration)
+        next-acceleration (mv/multiply acceleration (float 0))]
+    (assoc mover :location next-location :velocity next-velocity :acceleration next-acceleration)))
 
 (defn check-edges [{:keys [location velocity mass] :as mover}]
   (let [[x y] location
@@ -99,13 +99,13 @@
       mover)))
 
 (defn update-mover
-   "takes a mover and force returns a mover with updated motion-state and applied force"
-   [mover fluid]
-    (let [drag-force (drag-force fluid mover)]
-      (-> (apply-gravity mover)
-          (apply-force drag-force) 
-          (update-motion-state)
-          (check-edges))))
+  "takes a mover and force returns a mover with updated motion-state and applied force"
+  [mover fluid]
+  (let [drag-force (drag-force fluid mover)]
+    (-> (apply-gravity mover)
+        (apply-force drag-force) 
+        (update-motion-state)
+        (check-edges))))
 
 (defn draw-mover 
   [{:keys [location mass color] :as mover}]
@@ -135,7 +135,7 @@
 (def sketch-model
   (atom
     { :fluid nil 
-      :movers nil}))
+     :movers nil}))
 
 (defn init-sketch-model [m-atom] 
   (swap! 
@@ -183,9 +183,9 @@
        (constantly (make-movers)))))
 
 (defn run-sketch []
-	(qc/defsketch fluidresistance
-	  :title "Bodies experience gravity and fluid resistance"
-	  :setup setup-sketch
-	  :draw draw-sketch
-	  :mouse-pressed mouse-pressed
+  (qc/defsketch fluidresistance
+    :title "Bodies experience gravity and fluid resistance"
+    :setup setup-sketch
+    :draw draw-sketch
+    :mouse-pressed mouse-pressed
     :size [(params :size-x) (params :size-y)]))
