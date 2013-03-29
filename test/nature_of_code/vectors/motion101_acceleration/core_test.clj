@@ -4,7 +4,7 @@
 
 ; ein Dummy-Test, damit im output feedback zu sehen ist 
 (deftest test-that-succeeds
-    (testing 
-      "succeed"
-      (is 
-        (= 1 1)))) 
+  (testing 
+    "succeed"
+    (is 
+      (= 1 1)))) 

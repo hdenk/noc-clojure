@@ -3,8 +3,8 @@
   A 'Mover' object stores location, velocity, and acceleration as vectors
   The motion is controlled by affecting the acceleration (in this case towards the mouse) 
   Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
-  (:require [quil.core :as qc])
-  (:use [nature-of-code.math.vector :as mv]))
+  (:require [quil.core :as qc]
+            [nature-of-code.math.vector :as mv]))
 
 (def params 
   {:size-x 800 
@@ -29,9 +29,9 @@
   (let [mouse [(qc/mouse-x) (qc/mouse-y)]
         acc (mv/subtract mouse (:location m))
         acc (mv/set-magnitude acc (params :acceleration-rate))]
-   (-> (update-in m [:velocity] #(mv/add % acc))
-       (update-in [:location] #(mv/add % (:velocity m)))
-       (update-in [:velocity] #(mv/limit % (:top-speed m))))))
+    (-> (update-in m [:velocity] #(mv/add % acc))
+        (update-in [:location] #(mv/add % (:velocity m)))
+        (update-in [:velocity] #(mv/limit % (:top-speed m))))))
 
 (defn update-mover [m-atom]
   (swap! m-atom do-update-mover))
