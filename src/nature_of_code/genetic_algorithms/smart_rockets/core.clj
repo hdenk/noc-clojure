@@ -1,8 +1,8 @@
 (ns nature-of-code.genetic-algorithms.smart-rockets.core
 	"Rockets adapt behavior to environment by applying genetic algorithm
 	 Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
-	(:require [quil.core :as q])
-	  (:import [processing.core PVector]))
+	(:require [quil.core :as q]
+            [nature-of-code.math.vector :as mv]))
 
 (defmacro dbg
   "print debug-infos to console"
@@ -43,7 +43,7 @@
   (apply-force [this force] "apply force to the massive object"))
 
 (defprotocol Spatial
-  (contains? [this spot] "returns true if the spatial object contains the spot"))
+  (containso? [this spot] "returns true if the spatial object contains the spot"))
 
 (defprotocol Drawable
   (draw [this] "draw the drawable object to an output-device"))
@@ -58,8 +58,8 @@
 
 (defn random-gene [force]
   (let [angle (rand processing.core.PConstants/TWO_PI)
-        rand-gene (PVector. (Math/cos angle) (Math/sin angle))]
-    (.mult rand-gene (float (rand force))) ; Seiteneffekt
+        rand-gene (vector (Math/cos angle) (Math/sin angle))]
+    (mv/multiply rand-gene (float (rand force)))
     rand-gene))
 
 (defrecord DNA [max-force genes]
@@ -74,7 +74,8 @@
       (assoc dna :genes child-genes)))
 
   (mutate [dna mutation-rate]
-    (let [mutated-genes (into []
+    (let [mutated-genes (into 
+                          []
                               (map    
                                 #(if (< (rand) mutation-rate)
                                    (random-gene 0.1)
@@ -97,15 +98,17 @@
 ;;
 (defrecord Obstacle [location w h]
   Spatial
-  (contains? [obstacle spot]
-    (let [x (.-x (:location obstacle))
-          y (.-y (:location obstacle))
-          w (:w obstacle)
-          h (:h obstacle)]
-    (and (> (.-x spot) x) 
-         (< (.-x spot) (+ x w))
-         (> (.-y spot) y)
-         (< (.-y spot) (+ y h)))))
+  (containso? [obstacle spot]
+    (let [ox (first (:location obstacle))
+          oy (second (:location obstacle))
+          ow (:w obstacle)
+          oh (:h obstacle)
+          sx (first spot)
+          sy (second spot)]
+    (and (> sx ox) 
+         (< sx (+ ox ow))
+         (> sy oy)
+         (< sy (+ oy oh)))))
 
   Drawable
   (draw [obstacle]
@@ -113,15 +116,15 @@
     (q/fill 175)
     (q/stroke-weight 2)
     (q/rect-mode :corner)
-    (let [x (.-x (:location obstacle))
-          y (.-y (:location obstacle))
+    (let [x (first (:location obstacle))
+          y (second (:location obstacle))
           w (:w obstacle)
           h (:h obstacle)]
       (q/rect x y w h))))
 
 (defn gen-obstacle 
   [& {:keys [location w h] 
-      :or {location (PVector. 0 0) w 0 h 0}}] 
+      :or {location [0 0] w 0 h 0}}] 
   (Obstacle. location w h)) 
 
 ;;
@@ -129,9 +132,9 @@
 ;;
 
 (defn next-motion-state [rocket]
-  (let [next-location (PVector/add (:location rocket) (:velocity rocket))
-        next-velocity (PVector/add (:velocity rocket) (:acceleration rocket))
-        next-acceleration (PVector/mult (:acceleration rocket) (float 0))]
+  (let [next-location (mv/add (:location rocket) (:velocity rocket))
+        next-velocity (mv/add (:velocity rocket) (:acceleration rocket))
+        next-acceleration (mv/multiply (:acceleration rocket) (float 0))]
     (assoc rocket :location next-location :velocity next-velocity :acceleration next-acceleration)))
 
 (defrecord Rocket [id mass location velocity acceleration r fitness dna gene-index min-d hit-obstacle hit-target]
@@ -151,9 +154,8 @@
 
   Massive
   (apply-force [rocket force]
-    (let [f (.get force)
-          mf (PVector/div f (float (:mass rocket)))
-          next-acceleration (PVector/add (:acceleration rocket) mf)]
+    (let [mf (mv/divide force (float (:mass rocket)))
+          next-acceleration (mv/add (:acceleration rocket) mf)]
       (assoc rocket :acceleration next-acceleration)))
 
   Drawable
@@ -163,9 +165,9 @@
     (q/rect-mode :center)
 
     (q/push-matrix)
-    (q/translate (.-x (:location rocket)) (.-y (:location rocket)))
+    (q/translate (first (:location rocket)) (second (:location rocket)))
     ; Draw a triangle rotated in the direction of velocity
-    (let [theta (+ (.heading2D (:velocity rocket)) (/ Math/PI 2))]
+    (let [theta (+ (mv/heading-2d (:velocity rocket)) (/ Math/PI 2))]
       (q/rotate theta))
 
     (let [r (:r rocket)
@@ -187,7 +189,7 @@
 
 (defn gen-rocket
   [& {:keys [id mass location velocity acceleration r fitness dna gene-counter min-d hit-obstacle hit-target] 
-      :or {id "rx" mass 1.0 location (PVector. 0 0) velocity (PVector. 0 0) acceleration (PVector. 0 0) 
+      :or {id "rx" mass 1.0 location [0 0] velocity [0 0] acceleration [0 0] 
            r (params :rocket-r) fitness 0 dna [] gene-counter 0 min-d Integer/MAX_VALUE hit-obstacle false hit-target false}}] 
   (Rocket. id mass location velocity acceleration r fitness dna gene-counter min-d hit-obstacle hit-target))
 
@@ -198,7 +200,7 @@
     (let [how-fast (Math/pow (- (params :lifetime) (:gene-index rocket)) 2)] 
       (assoc rocket :fitness how-fast)) 
     ; didn't hit-target -> fitness-criterium = how-near
-    (let [d (q/dist (.-x (:location rocket)) (.-y (:location rocket)) (.-x target) (.-y target))
+    (let [d (q/dist (first (:location rocket)) (second (:location rocket)) (first target) (second target))
           min-d (min (:min-d rocket) d)
           how-near (Math/pow (/ 1 min-d) 2)]
       (assoc rocket :fitness how-near))))
@@ -206,7 +208,7 @@
 ;; TODO optimierbar
 (defn check-target [rocket target]
   ; TODO ? if (:hit-target rocket)
-  (let [d (q/dist (.-x (:location rocket)) (.-y (:location rocket)) (.-x target) (.-y target))
+  (let [d (q/dist (first (:location rocket)) (second (:location rocket)) (first target) (second target))
         next-hit-target (< d (params :target-r))
         next-min-d (min (:min-d rocket d))]
     (assoc rocket :hit-target next-hit-target :min-d next-min-d)))
@@ -215,7 +217,7 @@
 (defn check-obstacles [rocket obstacles]
   ; TODO ? if (:hit-obstacle rocket)
   (let [next-hit-obstacle (reduce 
-                           #(or %1 (contains? %2 (:location rocket))) 
+                           #(or %1 (containso? %2 (:location rocket))) 
                            false obstacles)]
     (assoc rocket :hit-obstacle next-hit-obstacle)))
 
@@ -235,7 +237,7 @@
         (map
           #(gen-rocket
              :id (str "r" %)
-             :location (PVector. (/ (size-x) 2) (- (size-y) 20))
+             :location (vector (/ (size-x) 2) (- (size-y) 20))
              :dna  (random-dna (params :lifetime)))
           (range rocket-count))))
 
@@ -275,7 +277,7 @@
         dna2 (:dna rocket2)
         new-dna (crossover dna1 dna2)]
     (gen-rocket :id (str "r" rocket-index)
-                :location (PVector. (/ (size-x) 2) (- (size-y) 20))
+                :location (vector (/ (size-x) 2) (- (size-y) 20))
                 :dna new-dna)))
 
 (defn mutate-rocket [rocket mutation-rate]
@@ -316,7 +318,7 @@
 
 (defn gen-world 
   [& {:keys [population obstacles target life-count] 
-      :or {population nil obstacles [] target (PVector. 0 0) life-count 0}}] 
+      :or {population nil obstacles [] target [0 0] life-count 0}}] 
   (World. population obstacles target life-count)) 
 
 (def world (atom {}))  
@@ -328,7 +330,7 @@
 (defn gen-obstacles [w h]
   (let [x (- (/ (size-x) 2) (/ w 2))
         y (- (/ (size-y) 2) (/ h 2))
-        location (PVector. x y)]
+        location (vector x y)]
     (vector (gen-obstacle :location location :w w :h h))))  
 
 (defn setup-sketch []
@@ -340,7 +342,7 @@
         mutation-rate (params :mutation-rate)
         population (gen-population :mutation-rate mutation-rate :rockets rockets)
         obstacles (gen-obstacles (params :obstacle-w) (params :obstacle-h))
-        target (PVector. (/ (size-x) 2) (params :target-r))]
+        target (vector (/ (size-x) 2) (params :target-r))]
     (swap! world (constantly (gen-world :population population :obstacles obstacles :target target :life-count 0)))))
 
 (defn draw-sketch []
@@ -356,7 +358,7 @@
         life-count (:life-count @world)]
     ; draw target
     (q/fill 0) 
-    (q/ellipse (.-x target) (.-y target) (params :target-r) (params :target-r))
+    (q/ellipse (first target) (second target) (params :target-r) (params :target-r))
 
     ; draw rockets 
     (draw-population (:population @world))
@@ -383,7 +385,7 @@
     (q/text (str "Cycles left: " (- (params :lifetime) life-count)) 10 36))) 
 
 (defn mouse-pressed [] 
-  (swap! world assoc :target (PVector. (q/mouse-x) (q/mouse-y))))
+  (swap! world assoc :target (vector (q/mouse-x) (q/mouse-y))))
 
 (defn run []
 	(q/defsketch smart-rockets-superbasic 
