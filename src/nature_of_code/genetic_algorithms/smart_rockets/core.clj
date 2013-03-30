@@ -1,7 +1,7 @@
 (ns nature-of-code.genetic-algorithms.smart-rockets.core
-	"Rockets adapt behavior to environment by applying genetic algorithm
-	 Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
-	(:require [quil.core :as q]
+  "Rockets adapt behavior to environment by applying genetic algorithm
+  Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
+  (:require [quil.core :as q]
             [nature-of-code.math.vector :as mv]))
 
 (defmacro dbg
@@ -34,7 +34,9 @@
 
 ;;
 ;; Abstractions
-;;
+;; 
+
+; TODO find better names for the abstraction(s)
 
 (defprotocol Mobile
   (move [this] "moves the mobile Object"))
@@ -48,7 +50,7 @@
 (defprotocol Drawable
   (draw [this] "draw the drawable object to an output-device"))
 
-(defprotocol Genetic ; TODO find better names for the abstraction(s)
+(defprotocol Genetic   
   (crossover [this partner] "produce new DNA by mixing genes of two individuals")
   (mutate [this mutation-rate] "mutate based on probability"))
 
@@ -56,10 +58,10 @@
 ;; DNA
 ;;
 
-(defn random-gene [force]
+(defn random-gene [max-force]
   (let [angle (rand processing.core.PConstants/TWO_PI)
         rand-gene (vector (Math/cos angle) (Math/sin angle))]
-    (mv/multiply rand-gene (float (rand force)))
+    (mv/multiply rand-gene (rand max-force))
     rand-gene))
 
 (defrecord DNA [max-force genes]
@@ -76,11 +78,11 @@
   (mutate [dna mutation-rate]
     (let [mutated-genes (into 
                           []
-                              (map    
-                                #(if (< (rand) mutation-rate)
-                                   (random-gene 0.1)
-                                   %) 
-                                (:genes dna)))]
+                          (map    
+                            #(if (< (rand) mutation-rate)
+                               (random-gene 0.1)   ; TODO ??? 0.1 -> (:max-force dna)
+                               %) 
+                            (:genes dna)))]
       (assoc dna :genes mutated-genes)))) 
 
 (defn gen-dna 
@@ -96,6 +98,7 @@
 ;;
 ;; Obstacle
 ;;
+
 (defrecord Obstacle [location w h]
   Spatial
   (containso? [obstacle spot]
@@ -105,10 +108,10 @@
           oh (:h obstacle)
           sx (first spot)
           sy (second spot)]
-    (and (> sx ox) 
-         (< sx (+ ox ow))
-         (> sy oy)
-         (< sy (+ oy oh)))))
+      (and (> sx ox) 
+           (< sx (+ ox ow))
+           (> sy oy)
+           (< sy (+ oy oh)))))
 
   Drawable
   (draw [obstacle]
@@ -147,9 +150,9 @@
             force (get genes gene-index)
             next-gene-index (mod (inc gene-index) (count genes))]
         (-> rocket 
-          (apply-force force)
-          (next-motion-state)
-          (assoc :gene-index next-gene-index)))
+            (apply-force force)
+            (next-motion-state)
+            (assoc :gene-index next-gene-index)))
       rocket))
 
   Massive
@@ -217,8 +220,8 @@
 (defn check-obstacles [rocket obstacles]
   ; TODO ? if (:hit-obstacle rocket)
   (let [next-hit-obstacle (reduce 
-                           #(or %1 (containso? %2 (:location rocket))) 
-                           false obstacles)]
+                            #(or %1 (containso? %2 (:location rocket))) 
+                            false obstacles)]
     (assoc rocket :hit-obstacle next-hit-obstacle)))
 
 ;;
@@ -245,9 +248,9 @@
   (let [next-rockets (into []
                            (map 
                              #(-> %
-                                (check-obstacles obstacles)
-                                (check-target target)
-                                (move))
+                                  (check-obstacles obstacles)
+                                  (check-target target)
+                                  (move))
                              (:rockets population)))] 
     (assoc population :rockets next-rockets)))
 
@@ -296,8 +299,8 @@
 (defn reproduce-rockets [rockets-count mating-pool mutation-rate]
   (into [] 
         (map  
-               #(reproduce-rocket % mating-pool mutation-rate) 
-               (range rockets-count)))) 
+          #(reproduce-rocket % mating-pool mutation-rate) 
+          (range rockets-count)))) 
 
 (defn next-generation [population]
   (let [mutation-rate (:mutation-rate population)
@@ -374,9 +377,9 @@
         (swap! world assoc :population next-population :life-count next-life-count))
       ; next generation
       (let [next-population (-> population
-                              (calc-rockets-fitness target)
-                              (populate-mating-pool)
-                              (next-generation))]
+                                (calc-rockets-fitness target)
+                                (populate-mating-pool)
+                                (next-generation))]
         (swap! world assoc :population next-population :life-count 0)))
 
     ; Display some info
@@ -387,10 +390,10 @@
 (defn mouse-pressed [] 
   (swap! world assoc :target (vector (q/mouse-x) (q/mouse-y))))
 
-(defn run []
-	(q/defsketch smart-rockets-superbasic 
-	  :title "Rockets adapt behavior to environment by applying genetic algorithm"
-	  :setup setup-sketch
-	  :draw draw-sketch
-	  :mouse-pressed mouse-pressed
-	  :size (params :size)))
+(defn run-sketch []
+  (q/defsketch smart-rockets-superbasic 
+    :title "Rockets adapt behavior to environment by applying genetic algorithm"
+    :setup setup-sketch
+    :draw draw-sketch
+    :mouse-pressed mouse-pressed
+    :size (params :size)))
