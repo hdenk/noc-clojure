@@ -1,6 +1,6 @@
 (ns nature-of-code.systems.particlesystem-polymorphism.core
   "Particle-System produces Particles that experience Gravity
-	 Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
+  Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
   (:require [quil.core :as q]
             [nature-of-code.math.vector :as mv]))
 
@@ -42,19 +42,19 @@
 ;;
 
 (defn- particle-next-state [particle]
-    (let [next-location (mv/add (:location particle) (:velocity particle))
-          next-velocity (mv/add (:velocity particle) (:acceleration particle))
-          next-acceleration (mv/multiply (:acceleration particle) (float 0))
-          next-lifespan (- (:lifespan particle) (params :lifespan-dec-rate))]
-      (assoc particle :location next-location :velocity next-velocity :acceleration next-acceleration :lifespan next-lifespan)))
+  (let [next-location (mv/add (:location particle) (:velocity particle))
+        next-velocity (mv/add (:velocity particle) (:acceleration particle))
+        next-acceleration (mv/multiply (:acceleration particle) (float 0))
+        next-lifespan (- (:lifespan particle) (params :lifespan-dec-rate))]
+    (assoc particle :location next-location :velocity next-velocity :acceleration next-acceleration :lifespan next-lifespan)))
 
 (defn- particle-apply-force [particle force]
-    (let [mf (mv/divide force (float (:mass particle)))
-          next-acceleration (mv/add (:acceleration particle) mf)]
-      (assoc particle :acceleration next-acceleration)))
+  (let [mf (mv/divide force (float (:mass particle)))
+        next-acceleration (mv/add (:acceleration particle) mf)]
+    (assoc particle :acceleration next-acceleration)))
 
 (defn- particle-expired? [particle]
-    (< (:lifespan particle) 0.0))
+  (< (:lifespan particle) 0.0))
 
 (defrecord CircularConfetti [id mass location velocity acceleration lifespan]
   Mobile 
@@ -64,7 +64,7 @@
   Massive
   (apply-force [this force]
     (particle-apply-force this force))
-  
+
   Expirable
   (expired? [this]
     (particle-expired? this))
@@ -84,7 +84,7 @@
   Massive
   (apply-force [this force]
     (particle-apply-force this force))
-  
+
   Expirable
   (expired? [this]
     (particle-expired? this))
@@ -129,9 +129,9 @@
   (move [this]
     (let [next-particles 
           (-> (:particles this) 
-            (move-particles) 
-            (add-particle (:origin this) (:particle-count this)) 
-            (remove-expired))
+              (move-particles) 
+              (add-particle (:origin this) (:particle-count this)) 
+              (remove-expired))
           next-particle-count (inc (:particle-count this))]
       (assoc this :particles next-particles :particle-count next-particle-count))) 
 
@@ -174,12 +174,12 @@
     (swap! 
       particle-system 
       #(-> % 
-         (apply-force gravity) 
-         (move)))))
+           (apply-force gravity) 
+           (move)))))
 
 (defn run-sketch []
-	(q/defsketch particlesystem-polymorphism 
-	  :title "Particle-System produces Particles that experience Gravity"
-	  :setup setup-sketch
-	  :draw draw-sketch
-	  :size (params :size)))
+  (q/defsketch particlesystem-polymorphism 
+    :title "Particle-System produces Particles that experience Gravity"
+    :setup setup-sketch
+    :draw draw-sketch
+    :size (params :size)))

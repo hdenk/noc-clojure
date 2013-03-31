@@ -20,7 +20,7 @@
   (second (params :size)))
 
 ;;
-;; Particle
+;; Abstractions
 ;;
 
 (defprotocol Mobile
@@ -34,6 +34,10 @@
 
 (defprotocol Drawable
   (draw [this] "draw the drawable object to an output-device"))
+
+;;
+;; Particle
+;;
 
 (defrecord Particle [id mass location velocity acceleration lifespan]
   Mobile  
@@ -99,6 +103,7 @@
   Drawable
   (draw [this]
     (dorun (map #(draw %) particles))))
+
 ;;
 ;; Sketch
 ;;

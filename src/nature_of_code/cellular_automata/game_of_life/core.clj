@@ -1,8 +1,7 @@
 (ns nature-of-code.cellular-automata.game-of-life.core
   "Implementation of conways game of life  
   Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
-  (:require [quil.core :as q])
-  (:import [processing.core PVector]))
+  (:require [quil.core :as q]))
 
 (def params ^{:doc "DataStructure representing Params to customize the app"} 
   {:size [400 400]
@@ -75,10 +74,9 @@
 (defn mouse-pressed [] 
   (swap! board assoc :cells (random-initial-cells (:rows @board) (:columns @board))))
 
-(defn run []
+(defn run-sketch []
 	(q/defsketch conways-game-of-life 
 	  :title "Implementation of conways game of life"
-	  :target :none
 	  :setup setup-sketch
 	  :draw draw-sketch
 	  :mouse-pressed mouse-pressed

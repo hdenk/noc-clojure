@@ -72,7 +72,7 @@
 (deftest test-obstacle
   (with-redefs [smart-rockets/params test-params] 
     (testing 
-      "contains?"
+      "containso?"
       (is
         (= 
           false

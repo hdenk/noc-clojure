@@ -32,10 +32,9 @@
           (q/rect (* x w) (- (q/height) r-count) (dec w) r-count)))))
   random-counts) 
 
-(defn run []
+(defn run-sketch []
 	(q/defsketch random-walk
 	  :title "random-distribution"
-	  :target :none
 	  :setup setup
 	  :draw draw
 	  :size (params :size)))

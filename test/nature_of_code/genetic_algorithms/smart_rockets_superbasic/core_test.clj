@@ -1,13 +1,9 @@
 (ns nature-of-code.genetic-algorithms.smart-rockets-superbasic.core-test
-  (:use 
-    clojure.test)
-  (:require 
-    [quil.core :as q]
-    [nature-of-code.test-utils :as test-utils]
-    [nature-of-code.genetic-algorithms.smart-rockets-superbasic.core :as smart-rockets])
-  (:import 
-    [processing.core PVector]
-    [nature_of_code.genetic_algorithms.smart_rockets_superbasic.core DNA Rocket Population]))
+  (:use clojure.test)
+  (:require [quil.core :as q]
+            [nature-of-code.test-utils :as test-utils]
+            [nature-of-code.genetic-algorithms.smart-rockets-superbasic.core :as smart-rockets])
+  (:import [nature_of_code.genetic_algorithms.smart_rockets_superbasic.core DNA Rocket Population]))
 
 (def test-params 
   {:size [300 400]
@@ -23,7 +19,7 @@
         rocket1 (smart-rockets/gen-rocket :dna dna :fitness 1)
         rocket2 (smart-rockets/gen-rocket :dna dna :fitness 2)
         population (smart-rockets/gen-population :rockets (vector rocket1 rocket2))]
-    (smart-rockets/gen-world :population population :target (PVector. 100 100))))
+    (smart-rockets/gen-world :population population :target [100 100])))
 
 (deftest test-dna
   (with-redefs [smart-rockets/params test-params] 
@@ -49,13 +45,13 @@
               (smart-rockets/crossover (smart-rockets/gen-dna :genes [1 2 3 4 5]) (smart-rockets/gen-dna :genes [:a :b :c :d :e])))))))
     (testing 
       "mutate"
-      (let [random-genes (vector (PVector. 0.0 0.0))]
+      (let [random-genes (vector [0.0 0.0])]
         (is 
           (= 
             random-genes
             (:genes
               (smart-rockets/mutate (smart-rockets/gen-dna :genes random-genes :maxforce 0.1) 0.0))))) ; mutation-rate zero
-      (let [random-genes (vector (PVector. 0.0 0.0))]
+      (let [random-genes (vector [0.0 0.0])]
         (is 
           (not= 
             random-genes
@@ -75,26 +71,26 @@
       "next-motion-state"
       (is 
         (= 
-          (PVector. 1.1 1.2) 
+          [1.1 1.2] 
           (:location
-            (smart-rockets/next-motion-state (smart-rockets/gen-rocket :location (PVector. 1 1) :velocity (PVector. 0.1 0.2)))))))
+            (smart-rockets/next-motion-state (smart-rockets/gen-rocket :location [1 1] :velocity [0.1 0.2]))))))
     (testing 
       "move"
       (is 
-        (not= (PVector. 0 0) ; velocity ungleich null-vector
-          (:velocity
-            (smart-rockets/move (smart-rockets/gen-rocket :velocity (PVector. 0 0) :acceleration (PVector. 0 0) :dna (smart-rockets/random-dna 3)))))))
+        (not= [0 0] ; velocity ungleich null-vector
+              (:velocity
+                (smart-rockets/move (smart-rockets/gen-rocket :velocity [0 0] :acceleration [0 0] :dna (smart-rockets/random-dna 3)))))))
     (testing 
       "apply-force"
       (is 
         (=  
-          (PVector. 0.1 0.2) 
+          [0.1 0.2]
           (:acceleration
-            (smart-rockets/apply-force (smart-rockets/gen-rocket :mass 1.0 :acceleration (PVector. 0 0)) (PVector. 0.1 0.2)))))
-      (is 
-        (=  
-          (smart-rockets/gen-rocket :mass 1.0 :acceleration (PVector. 0.1 0.2))
-          (smart-rockets/apply-force (smart-rockets/gen-rocket :mass 1.0 :acceleration (PVector. 0 0)) (PVector. 0.1 0.2)))))
+            (smart-rockets/apply-force (smart-rockets/gen-rocket :mass 1.0 :acceleration [0 0]) [0.1 0.2])))))
+    (is 
+      (=  
+        (smart-rockets/gen-rocket :mass 1.0 :acceleration [0.1 0.2])
+        (smart-rockets/apply-force (smart-rockets/gen-rocket :mass 1.0 :acceleration [0 0]) [0.1 0.2])))
     (testing 
       "check-target"     
       (with-redefs [smart-rockets/params {:target-r 50}] ; depends on (params :target-r)
@@ -102,26 +98,26 @@
           (=  
             true 
             (:hit-target
-              (smart-rockets/check-target (smart-rockets/gen-rocket :location (PVector. 100 100) :hit-target false) (PVector. 100 100)))))
+              (smart-rockets/check-target (smart-rockets/gen-rocket :location [100 100] :hit-target false) [100 100]))))
         (is 
           (=  
             false 
             (:hit-target 
-              (smart-rockets/check-target (smart-rockets/gen-rocket :location (PVector. 200 200) :hit-target true) (PVector. 100 100)))))))
+              (smart-rockets/check-target (smart-rockets/gen-rocket :location [200 200] :hit-target true) [100 100]))))))
     (testing 
       "fitness" 
       (is 
         (test-utils/close-to 
           0.04
           (:fitness
-            (smart-rockets/fitness (smart-rockets/gen-rocket :location (PVector. 100 100) :fitness 0) (PVector. 103 104))))))))
+            (smart-rockets/fitness (smart-rockets/gen-rocket :location [100 100] :fitness 0) [103 104])))))))
 
 (deftest test-population
   (with-redefs [smart-rockets/params test-params] 
     (testing 
       "next-motion-state"
       (is 
-        (not= (PVector. 0 0) ; velocity ungleich null-vector
+        (not= [0 0] ; velocity ungleich null-vector
               (get-in
                 (let [test-world (gen-test-world)]
                   (smart-rockets/move-and-check-rockets (:population test-world) (:target test-world)))
@@ -130,26 +126,26 @@
       "calc-fitness"
       (is 
         (pos? ; greater than zero
-          (get-in
-            (let [test-world (gen-test-world)]
-              (smart-rockets/calc-rocket-fitness (:population test-world) (:target test-world)))
-            [:rockets 0 :fitness]))))
+              (get-in
+                (let [test-world (gen-test-world)]
+                  (smart-rockets/calc-rocket-fitness (:population test-world) (:target test-world)))
+                [:rockets 0 :fitness]))))
     (testing 
       "populate-mating-pool"
       (is
         (=
-          150 ; fitness 1 und 2
-          (count 
-            (:mating-pool 
-              (let [test-world (gen-test-world)]
-                (smart-rockets/populate-mating-pool (:population test-world))))))))
+         150 ; fitness 1 und 2
+         (count 
+           (:mating-pool 
+             (let [test-world (gen-test-world)]
+               (smart-rockets/populate-mating-pool (:population test-world))))))))
     (testing 
       "next-generation"
       (is
         (=
-          2 ; hmm ... schwacher test
-          (count
-            (:rockets
-          (let [test-world (gen-test-world)]
-            (smart-rockets/next-generation 
-              (smart-rockets/populate-mating-pool (:population test-world)))))))))))
+         2 ; hmm ... schwacher test
+         (count
+           (:rockets
+             (let [test-world (gen-test-world)]
+               (smart-rockets/next-generation 
+                 (smart-rockets/populate-mating-pool (:population test-world)))))))))))

@@ -68,17 +68,11 @@
       (is 
         (= [3 4]
            (vector/set-magnitude [1 4/3] 5)))))
-(defmacro dbg
-  "print debug-infos to console"
-  [x] 
-  `(let 
-     [x# ~x] 
-     (println "dbg:" '~x "=" x#) x#)) 
 
 (deftest random-2d
     (testing 
       "random-2d"
-      (let [points (dbg (repeatedly 10 vector/random-2d))]
+      (let [points (repeatedly 10 vector/random-2d)]
         (is 
           (count points)
           (count (distinct points)))        

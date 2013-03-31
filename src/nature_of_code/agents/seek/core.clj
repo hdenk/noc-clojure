@@ -1,8 +1,8 @@
 (ns nature-of-code.agents.seek.core
   "Primitive Agent steers towards Target 
   Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
-  (:require [quil.core :as q])
-  (:import [processing.core PVector]))
+  (:require [quil.core :as q]
+            [nature-of-code.math.vector :as mv]))
 
 (def params 
   {:size [600 400]
@@ -39,29 +39,27 @@
 (defrecord Vehicle [id mass location velocity acceleration r max-speed max-force]
   Mobile  
   (move [this]
-    (let [next-location (PVector/add location velocity)
-          next-velocity (PVector/add velocity acceleration)
-          next-acceleration (PVector/mult acceleration (float 0))]
-      (.limit next-velocity max-speed) ; Seiteneffekt
+    (let [next-location (mv/add location velocity)
+          velocity-plus (mv/add velocity acceleration)
+          next-velocity (mv/limit velocity-plus max-speed)
+          next-acceleration (mv/multiply acceleration (float 0))]
       (assoc this :location next-location :velocity next-velocity :acceleration next-acceleration)))
 
   Massiv
   (apply-force [this force] 
-    (let [f (.get force)
-          mf (PVector/div f (float mass))
-          next-acceleration (PVector/add acceleration mf)]
+    (let [mf (mv/divide force (float mass))
+          next-acceleration (mv/add acceleration mf)]
       (assoc this :acceleration next-acceleration)))
 
   Autonomous
   (seek [this target]
-    (let [desired (PVector/sub target location)]
-      ; Normalize desired and scale to maximum speed
-      (.normalize desired) ; Seiteneffekt
-      (.mult desired (float max-speed)) ; Seiteneffekt
-      ; Steering = Desired minus velocity
-      (let [steer (PVector/sub desired velocity)]
-        (.limit steer max-force) ; Limit to maximum steering force
-        (apply-force this steer))))
+    ; Normalize desired and scale to maximum speed
+    (let [distance (mv/subtract target location)
+          distance-n (mv/normalize distance)
+          desired (mv/multiply distance-n (float max-speed))
+          steer (mv/subtract desired velocity) ; Steering = Desired minus velocity
+          limited-steer (mv/limit steer max-force)] ; Limit to maximum steering force
+      (apply-force this limited-steer)))
 
   Drawable
   (draw [this]
@@ -70,9 +68,9 @@
     (q/fill (params :vehicle-color))
 
     (q/push-matrix)
-    (q/translate (.-x location) (.-y location))
+    (q/translate (first location) (second location))
     ; Draw a triangle rotated in the direction of velocity
-    (let [theta  (+ (.heading2D velocity) (/ Math/PI 2))]
+    (let [theta  (+ (mv/heading-2d velocity) (/ Math/PI 2))]
       (q/rotate theta))
     (q/begin-shape)
     (q/vertex 0 (* (* r -1) 2)) 
@@ -89,8 +87,8 @@
 (def vehicle 
   (atom 
     (map->Vehicle 
-      {:id "v1" :mass 1.0 :location (PVector. (/ (size-x) 2) (/ (size-y) 2))
-       :velocity (PVector. 0 -2) :acceleration (PVector. 0 0) 
+      {:id "v1" :mass 1.0 :location [(/ (size-x) 2) (/ (size-y) 2)]
+       :velocity [0 -2] :acceleration [0 0] 
        :r (params :vehicle-r) :max-speed (params :max-speed) :max-force (params :max-force)})))  
 
 (defn setup-sketch []
@@ -103,12 +101,12 @@
   (q/fill 255) 
   (q/rect 0 0 (q/width) (q/height))
 
-  (let [target (PVector. (q/mouse-x) (q/mouse-y))] 
+  (let [target [(q/mouse-x) (q/mouse-y)]] 
     (q/fill 200)
     (q/stroke 0)
     (q/stroke-weight 2)
 
-    (q/ellipse (.-x target) (.-y target) (params :target-r) (params :target-r))
+    (q/ellipse (first target) (second target) (params :target-r) (params :target-r))
 
     (draw @vehicle)
 
@@ -116,14 +114,13 @@
     (swap! 
       vehicle 
       #(-> % 
-         (seek target) 
-         (move)))))
+           (seek target) 
+           (move)))))
 
-(defn run []
-	(q/defsketch particlesystem-forces 
-	  :title "Primitive Agent steers towards Target"
-	  :target :none
-	  :setup setup-sketch
-	  :draw draw-sketch
-	  :size (params :size)))
+(defn run-sketch []
+  (q/defsketch particlesystem-forces 
+    :title "Primitive Agent steers towards Target"
+    :setup setup-sketch
+    :draw draw-sketch
+    :size (params :size)))
 

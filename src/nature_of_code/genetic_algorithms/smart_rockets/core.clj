@@ -4,13 +4,6 @@
   (:require [quil.core :as q]
             [nature-of-code.math.vector :as mv]))
 
-(defmacro dbg
-  "print debug-infos to console"
-  [x] 
-  `(let 
-     [x# ~x] 
-     (println "dbg:" '~x "=" x#) x#)) 
-
 (def params ^{:doc "DataStructure representing Params to customize the app"} 
   {:size [600 400]
    :background 255
@@ -258,7 +251,7 @@
 (defn dup-rockets [rocket max-fitness]
   (let [norm-fitness (q/map-range (:fitness rocket) 0 max-fitness 0 1)
         n (int (* norm-fitness 100))]
-    (dbg (str (:id rocket) ":" n ":" (:fitness rocket) ":" (:hit-obstacle rocket) ":" (:hit-target rocket) ":" (:gene-index rocket) ":" (:min-distance rocket)))
+    ;(dbg (str (:id rocket) ":" n ":" (:fitness rocket) ":" (:hit-obstacle rocket) ":" (:hit-target rocket) ":" (:gene-index rocket) ":" (:min-distance rocket)))
     (repeat n rocket)))
 
 (defn gen-mating-pool [rockets max-fitness]

@@ -1,11 +1,8 @@
 (ns nature-of-code.cellular-automata.game-of-life.core-test
-  (:use 
-    clojure.test)
-  (:require 
-    [nature-of-code.test-utils :as test-utils]
+  (:use clojure.test)
+  (:require [nature-of-code.test-utils :as test-utils]
     [nature-of-code.cellular-automata.game-of-life.core :as game-of-life])
-  (:import 
-    [nature_of_code.cellular_automata.game_of_life.core Board]))
+  (:import [nature_of_code.cellular_automata.game_of_life.core Board]))
 
 (def test-params 
   {:size [300 200]
