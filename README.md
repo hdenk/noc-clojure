@@ -1,15 +1,5 @@
 # The-Nature-of-Code-in-Cljoure
 
-I'm an app. Or maybe I'm a library? I haven't decided yet. 
+[![Travis CI status](https://api.travis-ci.org/hdenk/noc-clojure.png)](http://travis-ci.org/#!/hdenk/noc-clojure/builds)
 
-The choice is up to you!
 
-## Usage
-
-FIXME
-
-## License
-
-Copyright © 2012 FIXME
-
-Distributed under the Eclipse Public License, the same as Clojure.
