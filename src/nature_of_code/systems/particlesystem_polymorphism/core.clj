@@ -1,8 +1,8 @@
 (ns nature-of-code.systems.particlesystem-polymorphism.core
   "Particle-System produces Particles that experience Gravity
 	 Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
-  (:require [quil.core :as q])
-  (:import [processing.core PVector]))
+  (:require [quil.core :as q]
+            [nature-of-code.math.vector :as mv]))
 
 (def params ^{:doc "DataStructure representing Params to customize the app"} 
   {:size [600 400]
@@ -41,20 +41,19 @@
 ;; Particle
 ;;
 
-(defn particle-next-state [particle]
-    (let [next-location (PVector/add (:location particle) (:velocity particle))
-          next-velocity (PVector/add (:velocity particle) (:acceleration particle))
-          next-acceleration (PVector/mult (:acceleration particle) (float 0))
+(defn- particle-next-state [particle]
+    (let [next-location (mv/add (:location particle) (:velocity particle))
+          next-velocity (mv/add (:velocity particle) (:acceleration particle))
+          next-acceleration (mv/multiply (:acceleration particle) (float 0))
           next-lifespan (- (:lifespan particle) (params :lifespan-dec-rate))]
       (assoc particle :location next-location :velocity next-velocity :acceleration next-acceleration :lifespan next-lifespan)))
 
-(defn particle-apply-force [particle force]
-    (let [f (.get force)
-          mf (PVector/div f (float (:mass particle)))
-          next-acceleration (PVector/add (:acceleration particle) mf)]
+(defn- particle-apply-force [particle force]
+    (let [mf (mv/divide force (float (:mass particle)))
+          next-acceleration (mv/add (:acceleration particle) mf)]
       (assoc particle :acceleration next-acceleration)))
 
-(defn particle-expired? [particle]
+(defn- particle-expired? [particle]
     (< (:lifespan particle) 0.0))
 
 (defrecord CircularConfetti [id mass location velocity acceleration lifespan]
@@ -75,7 +74,7 @@
     (q/stroke 0 (:lifespan this))
     (q/stroke-weight 2)
     (q/fill (params :particle-color) (:lifespan this))
-    (q/ellipse (.-x (:location this)) (.-y (:location this)) (params :circle-r) (params :circle-r))))
+    (q/ellipse (first (:location this)) (second (:location this)) (params :circle-r) (params :circle-r))))
 
 (defrecord SquaredConfetti [id mass location velocity acceleration lifespan]
   Mobile 
@@ -96,8 +95,8 @@
     (q/stroke 0 (:lifespan this))
     (q/stroke-weight 2)
     (q/push-matrix)
-    (q/translate (.-x (:location this)) (.-y (:location this)))
-    (let [theta (q/map-range (.-x (:location this)) 0 (q/width) 0 (* Math/PI 2))]
+    (q/translate (first (:location this)) (second (:location this)))
+    (let [theta (q/map-range (first (:location this)) 0 (q/width) 0 (* Math/PI 2))]
       (q/rotate theta))
     (q/rect-mode :center)
     (q/rect 0 0 (params :square-l) (params :square-l)) 
@@ -105,7 +104,7 @@
 
 (defn gen-particle 
   [& {:keys [id mass location velocity acceleration lifespan] 
-      :or {id "px" mass 0 location (PVector. 0 0) velocity (PVector. 0 0) acceleration (PVector. 0 0) lifespan 0}}] 
+      :or {id "px" mass 0 location [0 0] velocity [0 0] acceleration [0 0] lifespan 0}}] 
   (if (> (rand 1) 0.5)
     (CircularConfetti. id mass location velocity acceleration lifespan)
     (SquaredConfetti. id mass location velocity acceleration lifespan)))
@@ -120,7 +119,7 @@
 (defn add-particle [particles origin particle-count]
   (conj 
     particles 
-    (gen-particle :id (str "p" particle-count) :mass 1.0 :location origin :velocity (PVector. (q/random -1.0 1.0) (q/random -2.0 0)) :lifespan (params :lifespan))))
+    (gen-particle :id (str "p" particle-count) :mass 1.0 :location origin :velocity [(q/random -1.0 1.0) (q/random -2.0 0)] :lifespan (params :lifespan))))
 
 (defn remove-expired [particles]
   (remove expired? particles)) 
@@ -152,7 +151,7 @@
 (def particle-system ^{:doc "DataStructure representing a ParticleSystems State"}
   (atom 
     (map->ParticleSystem 
-      {:origin (PVector. (/ (size-x) 2) (- (size-y) (* (size-y) 0.75))) 
+      {:origin [(/ (size-x) 2) (- (size-y) (* (size-y) 0.75))] 
        :particles []
        :particle-count 0})))
 
@@ -171,17 +170,16 @@
   (draw @particle-system)
 
   ; update ParticleSystem to next-state
-  (let [gravity (PVector. 0.0 (params :gravity-force))]
+  (let [gravity [0.0 (params :gravity-force)]]
     (swap! 
       particle-system 
       #(-> % 
          (apply-force gravity) 
          (move)))))
 
-(defn run []
+(defn run-sketch []
 	(q/defsketch particlesystem-polymorphism 
 	  :title "Particle-System produces Particles that experience Gravity"
-	  :target :none
 	  :setup setup-sketch
 	  :draw draw-sketch
 	  :size (params :size)))
