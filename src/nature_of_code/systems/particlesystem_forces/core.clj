@@ -127,10 +127,9 @@
          (apply-force gravity) 
          (move)))))
 
-(defn run []
+(defn run-sketch []
 	(q/defsketch particlesystem-forces 
 	  :title "Particle-System produces Particles that experience Gravity"
-	  :target :none
 	  :setup setup-sketch
 	  :draw draw-sketch
 	  :size (params :size)))
