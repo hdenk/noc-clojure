@@ -16,7 +16,7 @@
    :background 255
    :frame-rate 30
    :lifetime 200
-   :mutation-rate 0.03
+   :mutation-rate 0.05
    :max-force 1.0 
    :target-r 20
    :obstacle-w 200
@@ -80,7 +80,7 @@
                           []
                           (map    
                             #(if (< (rand) mutation-rate)
-                               (random-gene 0.1)   ; TODO ??? 0.1 -> (:max-force dna)
+                               (random-gene (params :max-force))   
                                %) 
                             (:genes dna)))]
       (assoc dna :genes mutated-genes)))) 
@@ -91,8 +91,7 @@
   (DNA. maxforce genes)) 
 
 (defn random-dna [lifetime]
-  (let [force (rand (params :max-force))
-        genes (vec (repeatedly lifetime #(random-gene force)))]
+  (let [genes (vec (repeatedly lifetime #(random-gene (params :max-force))))]
     (gen-dna :max-force (params :max-force) :genes genes)))
 
 ;;
@@ -191,34 +190,30 @@
     (q/pop-matrix)))
 
 (defn gen-rocket
-  [& {:keys [id mass location velocity acceleration r fitness dna gene-counter min-distance hit-obstacle hit-target] 
+  [& {:keys [id mass location velocity acceleration r fitness dna gene-index min-distance hit-obstacle hit-target] 
       :or {id "rx" mass 1.0 location [0 0] velocity [0 0] acceleration [0 0] 
-           r (params :rocket-r) fitness 0 dna [] gene-counter 0 min-distance Integer/MAX_VALUE hit-obstacle false hit-target false}}] 
-  (Rocket. id mass location velocity acceleration r fitness dna gene-counter min-distance hit-obstacle hit-target))
+           r (params :rocket-r) fitness 0 dna [] gene-index 0 min-distance Integer/MAX_VALUE hit-obstacle false hit-target false}}] 
+  (Rocket. id mass location velocity acceleration r fitness dna gene-index min-distance hit-obstacle hit-target))
 
-; TODO fitness-funktion zurück nach einfach, min-distance entfernen ?
-(defn fitness [rocket target]
-  (if (:hit-target rocket)
-    ; hit-target -> fitness-criterium = how-fast
-    (let [how-fast (Math/pow (- (params :lifetime) (:gene-index rocket)) 2)] 
-      (assoc rocket :fitness how-fast)) 
-    ; didn't hit-target -> fitness-criterium = how-near
-    (let [d (q/dist (first (:location rocket)) (second (:location rocket)) (first target) (second target))
-          min-distance (min (:min-distance rocket) d)
-          how-near (Math/pow (/ 1 min-distance) 2)]
-      (assoc rocket :fitness how-near))))
+(defn fitness [rocket]
+  (let [gene-index (:gene-index rocket)
+        finish-index (if (> gene-index 0) gene-index (params :lifetime))
+        fq (/ 1.0 (* finish-index (:min-distance rocket)))
+        fexp (Math/pow fq 2)
+        next-fitness (if (:hit-obstacle rocket) 
+                       (* fexp 0.05)
+                       (if (:hit-target rocket)
+                         (* fexp 2.0)
+                         fexp))]     
+      (assoc rocket :fitness next-fitness)))
 
-;; TODO optimierbar
 (defn check-target [rocket target]
-  ; TODO ? if (:hit-target rocket)
   (let [d (q/dist (first (:location rocket)) (second (:location rocket)) (first target) (second target))
         next-hit-target (< d (- (params :target-r) 2))
         next-min-distance (min (:min-distance rocket) d)]
     (assoc rocket :hit-target next-hit-target :min-distance next-min-distance)))
 
-;; TODO optimierbar
 (defn check-obstacles [rocket obstacles]
-  ; TODO ? if (:hit-obstacle rocket)
   (let [next-hit-obstacle (reduce 
                             #(or %1 (containso? %2 (:location rocket))) 
                             false obstacles)]
@@ -257,15 +252,13 @@
    (assoc population :rockets next-rockets)))
 
 (defn calc-rockets-fitness [population target]
-  (let [next-rockets (into []
-                           (map
-                             #(fitness % target) 
-                             (:rockets population)))]
-    (assoc population :rockets next-rockets))) 
+  (let [next-rockets (into [] (map fitness (:rockets population)))]
+    (assoc population :rockets next-rockets)))
 
 (defn dup-rockets [rocket max-fitness]
   (let [norm-fitness (q/map-range (:fitness rocket) 0 max-fitness 0 1)
         n (int (* norm-fitness 100))]
+    (dbg (str (:id rocket) ":" n ":" (:fitness rocket) ":" (:hit-obstacle rocket) ":" (:hit-target rocket) ":" (:gene-index rocket) ":" (:min-distance rocket)))
     (repeat n rocket)))
 
 (defn gen-mating-pool [rockets max-fitness]
@@ -287,7 +280,7 @@
 
 (defn mutate-rocket [rocket mutation-rate]
   (let [next-dna (mutate (:dna rocket) mutation-rate)]
-    (assoc rocket :dna next-dna)))  
+    (assoc rocket :dna next-dna)))
 
 (defn reproduce-rocket [rocket-index mating-pool mutation-rate]
   (let [pool-size (count mating-pool)
@@ -302,7 +295,7 @@
   (into [] 
         (map  
           #(reproduce-rocket % mating-pool mutation-rate) 
-          (range rockets-count)))) 
+          (range rockets-count))))
 
 (defn next-generation [population]
   (let [mutation-rate (:mutation-rate population)
@@ -315,7 +308,7 @@
 (defn draw-rocket [rocket]
   (when-not (:hit-obstacle rocket)
      (draw rocket)
-     rocket)) 
+     rocket))
   
 (defn draw-population [population]
   (dorun (map draw-rocket (:rockets population))))
