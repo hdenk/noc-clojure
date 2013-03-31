@@ -16,7 +16,8 @@
    :background 255
    :frame-rate 30
    :lifetime 200
-   :mutation-rate 0.05
+   :default-mutation-rate 0.03
+   :increased-mutation-rate 0.1
    :max-force 1.0 
    :target-r 20
    :obstacle-w 200
@@ -297,6 +298,12 @@
           #(reproduce-rocket % mating-pool mutation-rate) 
           (range rockets-count))))
 
+(defn adjust-mutation-rate [population]
+  (let [next-mutation-rate (if (> (count (filter :hit-target (:rockets population))) 0)
+                             (dbg (params :default-mutation-rate)) 
+                             (dbg (params :increased-mutation-rate)))]
+    (assoc population :mutation-rate next-mutation-rate))) 
+
 (defn next-generation [population]
   (let [mutation-rate (:mutation-rate population)
         mating-pool (:mating-pool population)
@@ -342,8 +349,7 @@
 
   ; initialize world
   (let [rockets (gen-random-rockets (params :rocket-count))
-        mutation-rate (params :mutation-rate)
-        population (gen-population :mutation-rate mutation-rate :rockets rockets)
+        population (gen-population :mutation-rate (params :mutation-rate) :rockets rockets)
         obstacles (gen-obstacles (params :obstacle-w) (params :obstacle-h))
         target (vector (/ (size-x) 2) (params :target-r))]
     (swap! world (constantly (gen-world :population population :obstacles obstacles :target target :life-count 0)))))
@@ -379,6 +385,7 @@
       (let [next-population (-> population
                                 (calc-rockets-fitness target)
                                 (populate-mating-pool)
+                                (adjust-mutation-rate)
                                 (next-generation))]
         (swap! world assoc :population next-population :life-count 0)))
 
