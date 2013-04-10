@@ -14,7 +14,7 @@
    :target-r 20
    :obstacle-w 200
    :obstacle-h 20
-   :rocket-count 100 
+   :rocket-count 50 
    :rocket-r 4
    :rocket-color 127
    :thrusters-color 0}) 
@@ -290,6 +290,13 @@
           #(reproduce-rocket % mating-pool mutation-rate) 
           (range rockets-count))))
 
+(defn adjust-mutation-rate [population]
+  "increase mutation-rate if no rocket hits target"
+  (let [next-mutation-rate (if (> (count (filter :hit-target (:rockets population))) 0)
+                             (params :mutation-rate) 
+                             (* (params :mutation-rate) 3))]
+    (assoc population :mutation-rate next-mutation-rate)))  
+
 (defn next-generation [population]
   (let [mutation-rate (:mutation-rate population)
         mating-pool (:mating-pool population)
@@ -371,6 +378,7 @@
       (let [next-population (-> population
                                 (calc-rockets-fitness target)
                                 (populate-mating-pool)
+                                (adjust-mutation-rate)
                                 (next-generation))]
         (swap! world assoc :population next-population :life-count 0)))
 
