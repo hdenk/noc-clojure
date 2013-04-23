@@ -1,5 +1,5 @@
 (ns nature-of-code.oscillation.oscillating-objects.core
-  "Demonstration of oscillation. Objects in randonly oscillating motion 
+  "Demonstration of oscillation. Objects in randomly oscillating motion 
   are connected by strings to a center-point. Looks like a spider moving its legs. 
   Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
   (:require [quil.core :as qc]
@@ -10,7 +10,7 @@
    :size-y 200
    :background 255
    :frame-rate 30
-   :oscillator-count 4
+   :oscillator-count 8
    :oscillator-r 32
    :oscillator-color 127
    :oscillator-opacity 127
@@ -29,14 +29,15 @@
 (defprotocol Drawable
   (draw [this] "draw the drawable object to an output-device"))
 
-;;;
-;;; Oscillator
-;;;
+;;
+;; Oscillator
+;;
 
-(defrecord Oscillator [id angle velocity amplitude]
+(defrecord Oscillator [id angle velocity amplitude lifespan]
   Mobile
   (move [oscillator]
-    (assoc oscillator :angle (mv/add (:angle oscillator) (:velocity oscillator))))
+    (let [next-angle (mv/add (:angle oscillator) (:velocity oscillator))]
+      (assoc oscillator :angle next-angle)))
   
   Drawable
   (draw [oscillator]
@@ -45,7 +46,6 @@
     (qc/stroke 0)
     (qc/stroke-weight 2)
     (qc/fill (params :oscillator-color) (params :oscillator-opacity))
-
     (let [amplitude-x (first (:amplitude oscillator))
           amplitude-y (second (:amplitude oscillator))
           angle-x (first (:angle oscillator))         
@@ -70,9 +70,9 @@
            :amplitude [(qc/random min-amplitude-x (/ (qc/width) 2)) (qc/random min-amplitude-y (/ (qc/height) 2))]}))
       (range (params :oscillator-count)))))
 
-;;;
-;;; Sketch
-;;;
+;;
+;; Sketch
+;;
 
 (def sketch-model
   (atom
@@ -104,7 +104,7 @@
 
 (defn run-sketch []
   (qc/defsketch oscillating-objects
-    :title "oscillating multiple objects"
+    :title "Randomly oscillating objects connected by Strings"
     :setup setup-sketch
     :draw draw-sketch
     :size [(params :size-x) (params :size-y)]))
