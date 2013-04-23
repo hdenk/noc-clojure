@@ -167,7 +167,7 @@
       (let [training-record (nth training-data index)
             inputs (:inputs training-record)
             guess (feed-forward perceptron inputs)]
-        (when (> guess 0) 
+        (when (> guess 0)
           (q/no-fill))
         (q/ellipse (nth inputs 0) (nth inputs 1) (params :point-r) (params :point-r)))
       (when (< index training-index)
@@ -175,9 +175,8 @@
 
     ; Display some info
     (q/translate (/ (- (q/width)) 2) (/ (+ (q/height)) 2))
-    (q/fill 127) 
-    (q/text (str "Training Index: " training-index) 10 -36)
-    (q/text (str "Weights: " (:weights perceptron)) 10 -18)))
+    (q/fill 127)
+    (q/text (str training-index (apply (partial format " %.3f * x + %.3f * y + %.3f = 0") (:weights perceptron))) 10 -18)))
 
 (defn run-sketch []
   (q/defsketch simple-perceptron 
