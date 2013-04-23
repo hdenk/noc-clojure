@@ -5,7 +5,8 @@
             [nature-of-code.math.vector :as mv]))
 
 (def params 
-  {:size [600 400]
+  {:size-x 600
+   :size-y 400
    :background 255
    :frame-rate 30
    :max-speed 4
@@ -15,14 +16,8 @@
    :vehicle-r 6
    :vehicle-color 127}) 
 
-(defn size-x []
-  (first (params :size)))
-
-(defn size-y []
-  (second (params :size)))
-
 ;;
-;; Vehicle
+;; Protocols
 ;;
 
 (defprotocol Mobile
@@ -36,6 +31,10 @@
 
 (defprotocol Drawable
   (draw [this] "draw the drawable object to an output-device"))
+
+;;
+;; Vehicle
+;;
 
 (defrecord Vehicle [id mass location velocity acceleration r max-speed max-force]
   Mobile 
@@ -93,7 +92,7 @@
 (def vehicle 
   (atom 
     (map->Vehicle 
-      {:id "v1" :mass 1.0 :location [(/ (size-x) 2) (/ (size-y) 2)]
+      {:id "v1" :mass 1.0 :location [(/ (params :size-x) 2) (/ (params :size-y) 2)]
        :velocity [0 -2] :acceleration [0 0] 
        :r (params :vehicle-r) :max-speed (params :max-speed) :max-force (params :max-force)})))  
 
@@ -128,4 +127,4 @@
     :title "Primitive Agent steers towards Target"
     :setup setup-sketch
     :draw draw-sketch
-    :size (params :size)))
+    :size [(params :size-x) (params :size-y)]))
