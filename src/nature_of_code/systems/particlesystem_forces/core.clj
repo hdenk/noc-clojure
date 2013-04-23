@@ -8,6 +8,7 @@
   {:size [600 400]
    :background 255
    :frame-rate 30
+   :gravity [0.0 0.1]
    :lifespan 255
    :lifespan-dec-rate 2
    :particle-r 16
@@ -24,10 +25,10 @@
 ;;
 
 (defprotocol Mobile
-  (move [this] "calc next motion state for the mobile object"))
+  (move [this] "enter next motion state for the mobile object"))
 
 (defprotocol Massiv
-  (apply-force [this force] "apply force to the masive object"))
+  (apply-force [this force] "apply force to the massive object"))
 
 (defprotocol Expirable
   (expired? [this] "returns true when lifespan is over"))
@@ -44,7 +45,7 @@
   (move [this]
     (let [next-location (mv/add location velocity)
           next-velocity (mv/add velocity acceleration)
-          next-acceleration (mv/multiply acceleration (float 0))
+          next-acceleration (mv/multiply acceleration 0)
           next-lifespan (- lifespan (params :lifespan-dec-rate))]
       (assoc this :location next-location :velocity next-velocity :acceleration next-acceleration :lifespan next-lifespan)))
 
@@ -56,7 +57,7 @@
 
   Expirable
   (expired? [this] 
-    (< lifespan 0.0))
+    (< lifespan 0))
 
   Drawable
   (draw [this]
@@ -124,7 +125,7 @@
   (draw @particle-system)
 
   ; update ParticleSystem to next-state
-  (let [gravity [0.0 0.1]]
+  (let [gravity (params :gravity)]
     (swap! 
       particle-system 
       #(-> % 

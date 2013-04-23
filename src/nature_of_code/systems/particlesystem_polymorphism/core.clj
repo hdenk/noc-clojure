@@ -8,7 +8,7 @@
   {:size [600 400]
    :background 255
    :frame-rate 30
-   :gravity-force 0.1
+   :gravity [0.0 0.1]
    :lifespan 255
    :lifespan-dec-rate 2
    :circle-r 16
@@ -26,7 +26,7 @@
 ;;
 
 (defprotocol Mobile
-  (move [this] "calc next motion state for the mobile object"))
+  (move [this] "enter next motion state for the mobile object"))
 
 (defprotocol Massive
   (apply-force [this force] "apply force to the massive object"))
@@ -49,12 +49,12 @@
     (assoc particle :location next-location :velocity next-velocity :acceleration next-acceleration :lifespan next-lifespan)))
 
 (defn- particle-apply-force [particle force]
-  (let [mf (mv/divide force (float (:mass particle)))
+  (let [mf (mv/divide force (:mass particle))
         next-acceleration (mv/add (:acceleration particle) mf)]
     (assoc particle :acceleration next-acceleration)))
 
 (defn- particle-expired? [particle]
-  (< (:lifespan particle) 0.0))
+  (< (:lifespan particle) 0))
 
 (defrecord CircularConfetti [id mass location velocity acceleration lifespan]
   Mobile 
@@ -170,7 +170,7 @@
   (draw @particle-system)
 
   ; update ParticleSystem to next-state
-  (let [gravity [0.0 (params :gravity-force)]]
+  (let [gravity (params :gravity)]
     (swap! 
       particle-system 
       #(-> % 
