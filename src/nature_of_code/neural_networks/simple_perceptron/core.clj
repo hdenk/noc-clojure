@@ -24,7 +24,8 @@
    :inputs-per-neuron 3
    :learning-rate 0.00001
    :training-record-count 2000
-   :line-color 127})
+   :f-line-color 127
+   :n-line-color 0})
 
 ;;
 ;; Protocols
@@ -59,6 +60,7 @@
                                #(+ %1 (* %2 error (:learning-rate perceptron))) 
                                (:weights perceptron)
                                inputs))]
+      (dbg (str error next-weights))
       (assoc perceptron :weights next-weights)))
 
   (activate [perceptron sum]
@@ -89,7 +91,7 @@
 
 (defn gen-training-record 
   [answer & inputs]
-  (TrainingRecord. inputs answer)) 
+  (TrainingRecord. (vec inputs) answer)) 
 
 (defn gen-training-data [training-record-count]
   (into []
@@ -127,8 +129,8 @@
   (q/translate (/ (q/width) 2) (/ (q/height) 2))
 
   ; Draw the line
+  (q/stroke (params :n-line-color))
   (q/stroke-weight 4)
-  (q/stroke (params :line-color))
   (let [x1 (params :x-min)
         y1 (f  x1)
         x2 (params :x-max)
@@ -137,7 +139,7 @@
 
   ; Draw the line based on the current weights
   ; Formula is weights[0]*x + weights[1]*y + weights[2] = 0
-  (q/stroke 0)
+  (q/stroke (params :n-line-color))
   (q/stroke-weight 1)
   (let [perceptron (:perceptron @sketch-model)
         weights (:weights perceptron)
@@ -166,17 +168,22 @@
 
       (let [training-record (nth training-data index)
             inputs (:inputs training-record)
+            x (nth inputs 0)
+            y (nth inputs 1)
             guess (feed-forward perceptron inputs)]
         (when (> guess 0)
           (q/no-fill))
-        (q/ellipse (nth inputs 0) (nth inputs 1) (params :point-r) (params :point-r)))
+        (q/ellipse x y (params :point-r) (params :point-r)))
       (when (< index training-index)
         (recur (inc index))))
 
     ; Display some info
     (q/translate (/ (- (q/width)) 2) (/ (+ (q/height)) 2))
     (q/fill 127)
-    (q/text (str training-index (apply (partial format " %.3f * x + %.3f * y + %.3f = 0") (:weights perceptron))) 10 -18)))
+    (let [[w0 w1 w2] (:weights perceptron)
+          x (/ w0 w1)
+          c (/ w2 w1)]
+      (q/text (str training-index (format ": y = %.3f * x + %.3f" x c)) 10 -18))))
 
 (defn run-sketch []
   (q/defsketch simple-perceptron 

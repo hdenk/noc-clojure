@@ -11,7 +11,7 @@
       (is 
         (let [training-data (simple-perceptron/gen-training-data 3)]
           (and (= (count training-data) 3) 
-               (every? #(instance? TrainingRecord %) training-data)))))))            
+               (every? #(instance? TrainingRecord %) training-data)))))))
 
 (deftest test-perceptron
   (with-redefs [simple-perceptron/params {}] ; to avoid unintended dependencies in params
@@ -20,20 +20,20 @@
       (is 
         (= 
           1 
-          (let [inputs [1 1 1]
-                weights [1 1 1]]
+          (let [inputs [1.0 1.0 1.0]
+                weights [1.0 1.0 1.0]]
             (simple-perceptron/feed-forward (simple-perceptron/gen-perceptron :weights weights) inputs))))
-      (is 
+      (is
         (= 
           -1 
-          (let [inputs [-1 -1 1]
-                weights [1 1 1]]
+          (let [inputs [-1.0 -1.0 1.0]
+                weights [1.0 1.0 1.0]]
             (simple-perceptron/feed-forward (simple-perceptron/gen-perceptron :weights weights) inputs))))
-      (is 
+      (is
         (= 
           1 
-          (let [inputs [1 -1 1]
-                weights [1 1 1]]
+          (let [inputs [1.0 -1.0 1.0]
+                weights [1.0 1.0 1.0]]
             (simple-perceptron/feed-forward (simple-perceptron/gen-perceptron :weights weights) inputs)))))
     (testing 
       "activate"
@@ -53,17 +53,17 @@
       "train"
       (is 
         (= 
-          [0 0 0] 
+          [1.0 1.0 1.0] 
           (:weights (let [inputs [1 1 1]
-                weights [1 1 1]
+                weights [1.0 1.0 1.0]
                 learning-rate 0.001
                 desired 1]
-            (simple-perceptron/train (simple-perceptron/gen-perceptron :weights weights :learning-rate learning-rate) inputs desired)))))  
-      (is 
+            (simple-perceptron/train (simple-perceptron/gen-perceptron :weights weights :learning-rate learning-rate) inputs desired)))))
+      (is
         (= 
-          [0 0 0] 
+          [0.998 0.998 0.998] 
           (:weights (let [inputs [1 1 1]
                 weights [1 1 1]
                 learning-rate 0.001
                 desired -1]
-            (simple-perceptron/train (simple-perceptron/gen-perceptron :weights weights :learning-rate learning-rate) inputs desired))))))))  
+            (simple-perceptron/train (simple-perceptron/gen-perceptron :weights weights :learning-rate learning-rate) inputs desired))))))))
