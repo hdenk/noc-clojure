@@ -4,6 +4,13 @@
   (:require [quil.core :as q]
             [nature-of-code.math.vector :as mv]))
 
+(defmacro dbg
+  "print debug-infos to console"
+  [x] 
+  `(let 
+     [x# ~x] 
+     (println "dbg:" '~x "=" x#) x#)) 
+
 (def params 
   {:size-x 600 
    :size-y 400
@@ -12,7 +19,7 @@
    :learning-rate 0.001
    :max-speed 4
    :max-force 0.1
-   :target-count 5
+   :target-count 3
    :target-r 30
    :vehicle-r 6
    :rect-s 36
@@ -49,24 +56,24 @@
   (+ min (rand (- max min))))
 
 (defn next-weight [force weight error learning-rate]
-  (let [weight-plus-dx (+ weight (* learning-rate (first error) (first force)))
-        next-weight (+ weight-plus-dx (* learning-rate (second error) (second force)))]
+  (let [plus-dx (+ weight (* learning-rate (first error) (first force)))
+        next-weight (+ plus-dx (* learning-rate (second error) (second force)))]
     (q/constrain next-weight 0 1)))
 
 (defrecord Perceptron [weights learning-rate]
   NeuralNetwork
   (train [this forces error]
     (let [next-weights (into []
-                             map
-                             #(next-weight %1 %2 error (:learning-rate this))
-                             forces       
-                             (:weights this))]
+                             (map
+                               #(next-weight %1 %2 error (:learning-rate this))
+                               forces       
+                               (:weights this)))]
       (assoc this :weights next-weights)))
 
   FeedForward
   (feed-forward [this forces]
-    (let [sum (reduce 
-                mv/add 
+    (let [sum (reduce
+                mv/add
                 (map mv/multiply forces (:weights this)))]
       sum))) ; no activation-function here
 
@@ -82,7 +89,7 @@
 ;; Vehicle
 ;;
 
-(defn train [vehicle forces error]
+(defn train-vehicle [vehicle forces error]
   (let [next-perceptron (train (:perceptron vehicle) forces error)]
     (assoc vehicle :perceptron next-perceptron)))
 
@@ -108,11 +115,11 @@
           error (mv/subtract desired-location (:location this))]
       (-> this 
           (apply-force steering-force)
-          (train forces error))))
+          (train-vehicle forces error))))
 
   (seek [this target]
     ; Normalize desired and scale to maximum speed
-    (let [distance (mv/subtract target location)
+    (let [distance (mv/subtract (:location target) (:location this))
           distance-n (mv/normalize distance)
           desired (mv/multiply distance-n (float max-speed))
           steer (mv/subtract desired velocity) ; Steering = Desired minus velocity
@@ -144,11 +151,11 @@
            r 0 max-speed 0.0 perceptron nil}}] 
   (Vehicle. id mass location velocity acceleration r max-speed max-force perceptron))
 
-(defn do-gen-vehicle [] 
+(defn gen-and-init-vehicle [] 
   (gen-vehicle :id "v1" :mass 1.0 :location [(/ (params :size-x) 2) (/ (params :size-y) 2)]
                :velocity [0 -2] :acceleration [0 0] 
                :r (params :vehicle-r) :max-speed (params :max-speed) :max-force (params :max-force)
-               :perceptron (gen-perceptron (random-weights) (params :learning-rate))))  
+               :perceptron (gen-perceptron :weights (random-weights (params :target-count)) :learning-rate (params :learning-rate))))  
 
 ;;
 ;; Target
@@ -161,7 +168,7 @@
       :or {id "tx" location [0 0]}}] 
   (Target. id location))
 
-(defn do-gen-targets [target-count]
+(defn gen-and-init-targets [target-count]
   (into [] 
         (map
           #(gen-target :id (str "v" %) :location [(rand-int (q/width)) (rand-int (q/height))])
@@ -175,15 +182,17 @@
   (atom
     {:targets nil
      :vehicle nil
-     :desired-location nil}))
+     :desired-location nil
+     :frame-counter 0}))
 
 (defn init-sketch-model [m-atom]
-  (swap! m-atom #(assoc % :targets (do-gen-targets (params :target-count))))
-  (swap! m-atom #(assoc % :vehicle (do-gen-vehicle)))
+  (swap! m-atom #(assoc % :targets (gen-and-init-targets (params :target-count))))
+  (swap! m-atom #(assoc % :vehicle (gen-and-init-vehicle)))
   (swap! m-atom #(assoc % :desired-location [(/ (q/width) 2) (/ (q/height) 2)])))
 
 (defn setup-sketch []
   (q/frame-rate (params :frame-rate))
+  ;(q/size (params :size-x) (params :size-y))
   (q/smooth)
   (init-sketch-model sketch-model))
 
@@ -205,9 +214,10 @@
     (q/stroke 0)
     (q/stroke-weight 2)
     (let [target (nth (:targets @sketch-model) target-index)
-          target-x (first target)
-          target-y (second target)]
-      (q/ellipse target-x, target-y, (params :target-r), (params :target-r)))
+          target-x (first (:location target))
+          target-y (second (:location target))]
+      (q/ellipse target-x, target-y, (params :target-r), (params :target-r))
+      (q/text (str target-index) (- target-x 5) (+ target-y 5)))
     (when (< target-index (dec (params :target-count)))
       (recur (inc target-index))))
 
@@ -219,13 +229,21 @@
       sketch-model 
       #(assoc 
          % 
-         :vehicle 
-         (-> (:vehicle @%) 
-             (steer targets desired-location)
-             (move))))
+         :vehicle (-> (:vehicle %) 
+                      (steer targets desired-location)
+                      (move))
+         :frame-counter (inc (:frame-counter %))))
 
     ; Draw the Vehicle
-    (draw vehicle)))
+    (draw vehicle)
+
+    ; Display some info
+    (q/fill 127)
+    (let [frame-counter (:frame-counter @sketch-model)
+          perceptron (:perceptron vehicle)
+          weights (:weights perceptron)]
+      (q/text (str "frame: " frame-counter) 10 18)
+      (q/text (str "weights: " (apply str (map #(format " %.3f" %) weights))) 10 38))))
 
 (defn mouse-pressed []
   (swap! 
@@ -233,7 +251,8 @@
     #(assoc 
        % 
        :targets 
-       (do-gen-targets (params :target-count)))))
+       (gen-and-init-targets (params :target-count))
+       :desired-location [(/ (q/width) 2) (/ (q/height) 2)])))
 
 (defn run-sketch []
   (q/defsketch neural-seek 
