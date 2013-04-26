@@ -192,7 +192,6 @@
 
 (defn setup-sketch []
   (q/frame-rate (params :frame-rate))
-  ;(q/size (params :size-x) (params :size-y))
   (q/smooth)
   (init-sketch-model sketch-model))
 
@@ -217,7 +216,7 @@
           target-x (first (:location target))
           target-y (second (:location target))]
       (q/ellipse target-x, target-y, (params :target-r), (params :target-r))
-      (q/text (str target-index) (- target-x 5) (+ target-y 5)))
+      (q/text (str target-index) (- target-x 3) (+ target-y 3)))
     (when (< target-index (dec (params :target-count)))
       (recur (inc target-index))))
 
@@ -250,9 +249,9 @@
     sketch-model 
     #(assoc 
        % 
-       :targets 
-       (gen-and-init-targets (params :target-count))
-       :desired-location [(/ (q/width) 2) (/ (q/height) 2)])))
+       :targets (gen-and-init-targets (params :target-count))
+       :desired-location [(/ (q/width) 2) (/ (q/height) 2)]
+       :frame-counter 0)))
 
 (defn run-sketch []
   (q/defsketch neural-seek 
