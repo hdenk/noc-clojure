@@ -9,7 +9,7 @@
       :or {id "vx" mass 0.0 location [0 0] velocity [0 0] acceleration [0 0] r 6 max-speed 0 max-force 0}}] 
   (Vehicle. id mass location velocity acceleration r max-speed max-force)) 
 
-(deftest test-particle
+(deftest test-vehicle
   (with-redefs [seek-agent/params {}] ; to avoid unintended dependencies in params
     (testing 
       "move"
