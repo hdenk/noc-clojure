@@ -55,6 +55,22 @@
         (= [1 2 4]
            (vector/divide [2 4 8] 2)))))
 
+(deftest distance
+    (testing 
+      "distance"
+      (is 
+        (= 0
+           (vector/distance [0 0] [0 0])))
+      (is 
+        (= 1
+           (vector/distance [0 0] [1 0])))
+      (is 
+        (= 1
+           (vector/distance [0 0] [0 1])))
+      (is 
+        (= 5
+           (vector/distance [0 0] [-3 -4])))))
+
 (deftest limit
     (testing 
       "limit"
@@ -92,12 +108,11 @@
           (/ Math/PI 2)
           (vector/heading-2d [0 1])))
       (is 
-        (close-to 
-          (/ Math/PI 2)
-          (vector/heading-2d [1 0])))
+          0.0
+          (vector/heading-2d [1 0]))
       (is 
         (close-to 
-          (/ Math/PI 2)
+          (/ Math/PI 4)
           (vector/heading-2d [1 1])))))
 
 (deftest random-2d

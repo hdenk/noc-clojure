@@ -28,6 +28,10 @@
   "vector division"
   (vec (map / v (repeat scalar))))
 
+(defn distance [v1 v2]
+  "returns magnitude of v1 - v2 which is a scalar"
+  (Math/abs (magnitude (subtract v1 v2))))
+  
 (defn limit [v upper]
   "returns a vector constrained with an upper magnitude"
   (let [m (magnitude v)]
