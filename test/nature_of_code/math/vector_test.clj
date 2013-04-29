@@ -62,12 +62,43 @@
         (= [3 4]
            (vector/limit [6 8] 5)))))
 
-(deftest set-magnitude
+(deftest with-magnitude
     (testing 
-      "set-magnitude"
+      "with-magnitude"
       (is 
         (= [3 4]
-           (vector/set-magnitude [1 4/3] 5)))))
+           (vector/with-magnitude [1 4/3] 5)))))
+
+(deftest dot-product
+    (testing 
+      "dot-product"
+      (is 
+        (= 8
+           (vector/dot-product [1 2] [2 3])))))
+
+(deftest angle-between
+    (testing 
+      "angle-between"
+      (is 
+        (close-to 
+          (/ Math/PI 2)
+          (vector/angle-between [1 0] [0 1])))))
+
+(deftest heading-2d
+    (testing 
+      "heading-2d"
+      (is 
+        (close-to 
+          (/ Math/PI 2)
+          (vector/heading-2d [0 1])))
+      (is 
+        (close-to 
+          (/ Math/PI 2)
+          (vector/heading-2d [1 0])))
+      (is 
+        (close-to 
+          (/ Math/PI 2)
+          (vector/heading-2d [1 1])))))
 
 (deftest random-2d
     (testing 
