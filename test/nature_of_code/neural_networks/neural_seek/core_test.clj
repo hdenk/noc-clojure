@@ -84,8 +84,7 @@
       (is 
         (=  
           [1.0 1.0] 
-          (:acceleration (let [weights [1.0 1.0 1.0]
-                               learning-rate 0.001
+          (:acceleration (let [weights [1.0 1.0 1.0] learning-rate 0.001
                                perceptron (neural-seek/gen-perceptron :weights weights :learning-rate learning-rate)
                                vehicle (neural-seek/gen-vehicle :mass 1.0 :location [0 0] :velocity [0.1 0] :acceleration [0 0] :max-speed 1.0 :max-force 2.0 :perceptron perceptron)
                                targets [[0 100][100 0]]
