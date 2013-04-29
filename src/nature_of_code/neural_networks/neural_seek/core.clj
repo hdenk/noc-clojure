@@ -4,24 +4,18 @@
   (:require [quil.core :as q]
             [nature-of-code.math.vector :as mv]))
 
-(defmacro dbg
-  "print debug-infos to console"
-  [x] 
-  `(let 
-     [x# ~x] 
-     (println "dbg:" '~x "=" x#) x#)) 
-
 (def params 
   {:size-x 600 
    :size-y 400
    :background 255
    :frame-rate 30
    :learning-rate 0.001
-   :max-speed 4
+   :max-speed 10
    :max-force 0.1
    :target-count 3
    :target-r 30
    :vehicle-r 6
+   :arrive-r 50
    :rect-s 36
    :vehicle-color 127}) 
 
@@ -29,7 +23,7 @@
 ;; Protocols
 ;;
 
-(defprotocol NeuralNetwork
+(defprotocol Trainable
   (train [this forces desired] "train the neural network"))
 
 (defprotocol FeedForward
@@ -60,15 +54,15 @@
         next-weight (+ plus-dx (* learning-rate (second error) (second force)))]
     (q/constrain next-weight 0 1)))
 
-(defrecord Perceptron [weights learning-rate]
-  NeuralNetwork
+(defrecord Perceptron [weights learning-rate error]
+  Trainable
   (train [this forces error]
     (let [next-weights (into []
                              (map
                                #(next-weight %1 %2 error (:learning-rate this))
                                forces       
                                (:weights this)))]
-      (assoc this :weights next-weights)))
+      (assoc this :weights next-weights :error error)))
 
   FeedForward
   (feed-forward [this forces]
@@ -81,9 +75,9 @@
   (into [] (take weights-count (repeatedly #(random 0 1)))))
 
 (defn gen-perceptron 
-  [& {:keys [weights learning-rate] 
-      :or {weights [] learning-rate 0.0}}] 
-  (Perceptron. weights learning-rate))
+  [& {:keys [weights learning-rate error] 
+      :or {weights [] learning-rate 0.0 error [0.0 0.0]}}] 
+  (Perceptron. weights learning-rate error))
 
 ;;
 ;; Vehicle
@@ -120,12 +114,16 @@
   (seek [this target]
     ; Normalize desired and scale to maximum speed
     (let [distance (mv/subtract (:location target) (:location this))
+          distance-mag (mv/magnitude distance)
           distance-n (mv/normalize distance)
-          desired (mv/multiply distance-n (float max-speed))
+          desired (if (< distance-mag (params :arrive-r)) 
+                    (let [mapped-speed (q/map-range distance-mag 0 (params :arrive-r) 0 max-speed)]
+                      (mv/multiply distance-n mapped-speed)) 
+                    (mv/multiply distance-n (float max-speed)))
           steer (mv/subtract desired velocity) ; Steering = Desired minus velocity
           limited-steer (mv/limit steer max-force)] ; Limit to maximum steering force
       limited-steer))
-
+  
   Drawable
   (draw [this]
     (q/stroke 0)
@@ -198,7 +196,7 @@
 (defn draw-sketch []
   (q/background (params :background))
 
-  ; Draw a rectangle to show the Vehicle's goal
+  ; Draw a rectangle to show the Vehicle's desired-location
   (q/rect-mode :center)
   (q/stroke 0)
   (q/stroke-weight 2)
@@ -208,17 +206,18 @@
     (q/rect desired-x  desired-y, (params :rect-s), (params :rect-s)))
 
   ;Draw the targets
-  (loop [target-index 0]
-    (q/fill 0, 100)
-    (q/stroke 0)
-    (q/stroke-weight 2)
-    (let [target (nth (:targets @sketch-model) target-index)
-          target-x (first (:location target))
-          target-y (second (:location target))]
-      (q/ellipse target-x, target-y, (params :target-r), (params :target-r))
-      (q/text (str target-index) (- target-x 3) (+ target-y 3)))
-    (when (< target-index (dec (params :target-count)))
-      (recur (inc target-index))))
+  (let [max-index (dec (params :target-count))] 
+    (loop [target-index 0]
+      (q/fill 0, 100)
+      (q/stroke 0)
+      (q/stroke-weight 2)
+      (let [target (nth (:targets @sketch-model) target-index)
+            target-x (first (:location target))
+            target-y (second (:location target))]
+        (q/ellipse target-x, target-y, (params :target-r), (params :target-r))
+        (q/text (str (inc target-index)) (- target-x 3) (+ target-y 3)))
+      (when (< target-index max-index)
+        (recur (inc target-index)))))
 
   (let [vehicle (:vehicle @sketch-model)
         targets (:targets @sketch-model)
@@ -240,9 +239,11 @@
     (q/fill 127)
     (let [frame-counter (:frame-counter @sketch-model)
           perceptron (:perceptron vehicle)
-          weights (:weights perceptron)]
+          weights (:weights perceptron)
+          error (:error perceptron)]
       (q/text (str "frame: " frame-counter) 10 18)
-      (q/text (str "weights: " (apply str (map #(format " %.3f" %) weights))) 10 38))))
+      (q/text (str "weights: " (apply str (map #(format " %.3f" %) weights))) 10 38)
+      (q/text (str "error: " (format "%3d %3d" (int (first error)) (int (second error)))) 10 58))))
 
 (defn mouse-pressed []
   (swap! 
