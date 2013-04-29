@@ -27,7 +27,7 @@
   (train [this forces desired] "train the neural network"))
 
 (defprotocol FeedForward
-  (feed-forward [this forces]))
+  (feed-forward [this forces]) "process input through neuron(s) to calc output")
 
 (defprotocol Mobile
   (move [this] "calc next motion state for the mobile object"))
@@ -123,7 +123,7 @@
           steer (mv/subtract desired velocity) ; Steering = Desired minus velocity
           limited-steer (mv/limit steer max-force)] ; Limit to maximum steering force
       limited-steer))
-  
+
   Drawable
   (draw [this]
     (q/stroke 0)
@@ -169,7 +169,7 @@
 (defn gen-and-init-targets [target-count]
   (into [] 
         (map
-          #(gen-target :id (str "v" %) :location [(rand-int (q/width)) (rand-int (q/height))])
+          #(gen-target :id (str "t" %) :location [(rand-int (q/width)) (rand-int (q/height))])
           (range target-count))))
 
 ;;

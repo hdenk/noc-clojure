@@ -20,10 +20,10 @@
         (= 
           [0.51 0.47 0.97] 
           (:weights (let [forces [[1.0 0.0] [1.0 -2.0] [-1.0 -1.0]]
-                weights [0.5 0.5 1.0]
-                learning-rate 0.001
-                error [10.0 20.0]]
-            (neural-seek/train (neural-seek/gen-perceptron :weights weights :learning-rate learning-rate) forces error))))))))
+                          weights [0.5 0.5 1.0]
+                          learning-rate 0.001
+                          error [10.0 20.0]]
+                      (neural-seek/train (neural-seek/gen-perceptron :weights weights :learning-rate learning-rate) forces error))))))))
 
 (deftest test-vehicle
   (with-redefs [neural-seek/params {}] ; to avoid unintended dependencies in params
@@ -85,9 +85,9 @@
         (=  
           [1.0 1.0] 
           (:acceleration (let [weights [1.0 1.0 1.0]
-                learning-rate 0.001
-                perceptron (neural-seek/gen-perceptron :weights weights :learning-rate learning-rate)
-                vehicle (neural-seek/gen-vehicle :mass 1.0 :location [0 0] :velocity [0.1 0] :acceleration [0 0] :max-speed 1.0 :max-force 2.0 :perceptron perceptron)
-                targets [[0 100][100 0]]
-                desired-location [100 100]]
-            (neural-seek/steer vehicle targets desired-location))))))))
+                               learning-rate 0.001
+                               perceptron (neural-seek/gen-perceptron :weights weights :learning-rate learning-rate)
+                               vehicle (neural-seek/gen-vehicle :mass 1.0 :location [0 0] :velocity [0.1 0] :acceleration [0 0] :max-speed 1.0 :max-force 2.0 :perceptron perceptron)
+                               targets [[0 100][100 0]]
+                               desired-location [100 100]]
+                           (neural-seek/steer vehicle targets desired-location))))))))
