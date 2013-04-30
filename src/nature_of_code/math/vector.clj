@@ -39,6 +39,10 @@
       (multiply (normalize v)  upper)
       v)))
 
+(defn null-vector? [v]
+  "returns true, if argument-value is the null-vector"
+  (every? zero? v))
+
 (defn with-magnitude [v mag]
   "returns a vector with a certain magnitude"
   (multiply (normalize v) mag ))

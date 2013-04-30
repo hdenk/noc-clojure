@@ -78,6 +78,16 @@
       (= [3 4]
          (vector/limit [6 8] 5)))))
 
+(deftest null-vector?
+  (testing 
+    "null-vector?"
+    (is 
+      (vector/null-vector? [0 0]))
+    (is 
+      (not (vector/null-vector? [1 0])))
+    (is 
+      (not (vector/null-vector? [0 1])))))
+
 (deftest with-magnitude
   (testing 
     "with-magnitude"
