@@ -4,13 +4,6 @@
   (:require [quil.core :as q]
             [nature-of-code.math.vector :as mv]))
 
-(defmacro dbg
-  "print debug-infos to console"
-  [x] 
-  `(let 
-     [x# ~x] 
-     (println "dbg:" '~x "=" x#) x#)) 
-
 (def params 
   {:size-x 600 
    :size-y 400
@@ -18,11 +11,11 @@
    :frame-rate 30
    :max-speed 4
    :max-force 0.3
-   :vehicle-count 10
-   :vehicle-r 6
+   :vehicle-count 12
+   :vehicle-r 16
    :vehicle-color 127
    :seek-factor 1
-   :separation-factor 2}) 
+   :separation-factor 3}) 
 
 ;;
 ;; Protocols
@@ -45,14 +38,15 @@
 ;; Vehicle
 ;;
 
-(defn sum-distances [sum [location1 location2]]
+(defn add-distance-to [sum [other-loc vehicle-loc]]
   (let [separation-r (* (params :vehicle-r) 2)
-        d (mv/distance location1 location2)]
+        d (mv/distance vehicle-loc other-loc)]
     (if (and (> d 0) (< d separation-r))
-      (let [diff (mv/subtract location1 location2)
+      (let [diff (mv/subtract vehicle-loc other-loc)
             diff-n (mv/normalize diff)
             weighted-distance (mv/divide diff-n d)]
-        (mv/add sum weighted-distance)))))
+        (mv/add sum weighted-distance))
+        sum)))
   
 (defrecord Vehicle [id mass location velocity acceleration r max-speed max-force]
   Mobile  
@@ -72,28 +66,31 @@
   Autonomous
   (seek [this target]
     ; Normalize desired and scale to maximum speed
-    (let [distance (mv/subtract target location)
-          distance-n (mv/normalize distance)
-          desired (mv/multiply distance-n (float max-speed))
-          steer (mv/subtract desired velocity) ; Steering = Desired minus velocity
-          limited-steer (mv/limit steer max-force)] ; Limit to maximum steering force
-      limited-steer))
+    (let [distance (mv/subtract target location)]
+      (if (not (mv/null-vector? distance))
+        (let [distance-n (mv/normalize distance)
+              desired (mv/multiply distance-n (float max-speed))
+              steering-force (mv/subtract desired velocity) ; Steering = Desired minus velocity
+              steering-force (mv/limit steering-force max-force)] ; Limit to maximum steering force
+          steering-force)
+        [0 0]))) ; steering-force maybe null-vector
   
   (separate [this other-vehicles]
     (let [separation-r (* (params :vehicle-r) 2)
-          distance-sum (reduce sum-distances [0 0] (map #(vector (:location %1) %2) other-vehicles (repeat location)))
-          distance-sum-n (mv/normalize distance-sum)
-          distance-sum-max (mv/multiply distance-sum max-speed)
-          steering-force (mv/subtract distance-sum-max velocity)
-          steering-force-l (mv/limit steering-force max-force)]
-      steering-force-l))
+          desired (reduce add-distance-to [0 0] (map #(vector (:location %1) %2) other-vehicles (repeat location)))]
+      (if (not (mv/null-vector? desired))
+         (let [desired-n (mv/normalize desired)
+               desired-max (mv/multiply desired-n max-speed)
+               steering-force (mv/subtract desired-max velocity)
+               steering-force (mv/limit steering-force max-force)]
+           steering-force)
+          [0 0]))) ; steering.force maybe null-vector
              
   Drawable
   (draw [this]
     (q/stroke 0)
     (q/stroke-weight 1)
     (q/fill (params :vehicle-color))
-
     (q/push-matrix)  
     (q/translate (first location) (second location))
     (q/ellipse 0 0 (params :vehicle-r) (params :vehicle-r))
@@ -132,11 +129,11 @@
 (defn next-state [vehicle other-vehicles desired-location]
   (let [seek-force (seek vehicle desired-location)
         separate-force (separate vehicle other-vehicles)
-        seek-force-f (mv/multiply seek-force (params :seek-factor))
-        separate-force-f (mv/multiply separate-force (params :separation-factor))]
+        seek-force (mv/multiply seek-force (params :seek-factor))
+        separate-force (mv/multiply separate-force (params :separation-factor))]
     (-> vehicle
-      (apply-force seek-force-f)
-      (apply-force separate-force-f)
+      (apply-force seek-force)
+      (apply-force separate-force)
       (move))))
 
 (defn draw-sketch []
@@ -165,9 +162,16 @@
 (defn mouse-dragged []
   (swap! 
     sketch-model 
-    #(assoc 
+    #(update-in 
        % 
-       :vehicles (gen-and-init-vehicles (params :vehicle-count) [(q/width) (q/height)]))))
+       [:vehicles] 
+       (fn [vehicles] 
+         (conj 
+           vehicles 
+           (gen-vehicle :id (str "v" (count vehicles)) :mass 1.0 
+                        :location [(q/mouse-x) (q/mouse-y)]
+                        :r (params :vehicle-r) :max-force (params :max-force) 
+                        :max-speed (params :max-speed)))))))
 
 (defn run-sketch []
   (q/defsketch separate-and-seek 

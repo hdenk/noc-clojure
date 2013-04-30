@@ -74,9 +74,8 @@
       "separate"
       (is 
         (=  
-          [0.9 0.0] 
+          [-0.7 -0.8] 
           (with-redefs [separate-and-seek/params {:vehicle-r 6}] ; references vehicle-r
 	          (let [vehicle (separate-and-seek/gen-vehicle :mass 1.0 :location [0 0] :velocity [0.1 0] :acceleration [0 0] :max-speed 1.0 :max-force 2.0)
-	                vehicle-r (separate-and-seek/params :vehicle-r)
-	                other-vehicles [(assoc vehicle :location [vehicle-r 0]) (assoc vehicle :location [0 vehicle-r])]]
+	                other-vehicles [(assoc vehicle :location [4 0]) (assoc vehicle :location [0 3])]]
 	            (separate-and-seek/separate vehicle other-vehicles))))))))
