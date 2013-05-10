@@ -4,16 +4,11 @@
   (:require [quil.core :as q]))
 
 (def params ^{:doc "DataStructure representing Params to customize the app"} 
-  {:size [400 400]
+  {:size-x 400 
+   :size-y 400
    :background 255
    :frame-rate 30
-   :cell-w 8})
-
-(defn size-x []
-  (first (params :size)))
-
-(defn size-y []
-  (second (params :size)))
+   :cell-w 16})
 
 ;;
 ;; Game
@@ -52,8 +47,8 @@
   (q/frame-rate (params :frame-rate))
   (q/smooth)
 
-  (let [rows (/ (size-y) (params :cell-w))
-        columns (/ (size-x) (params :cell-w))]
+  (let [rows (/ (params :size-y) (params :cell-w))
+        columns (/ (params :size-x) (params :cell-w))]
     (swap! board (constantly (gen-board :rows rows :columns columns :w (params :cell-w) :cells (random-initial-cells rows columns))))))
 
 (defn draw-sketch []
@@ -80,4 +75,4 @@
 	  :setup setup-sketch
 	  :draw draw-sketch
 	  :mouse-pressed mouse-pressed
-	  :size (params :size)))
+	  :size [(params :size-x) (params :size-y)]))
