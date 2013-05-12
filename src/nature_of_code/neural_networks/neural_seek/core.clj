@@ -27,7 +27,7 @@
   (train [this forces desired] "train the neural network"))
 
 (defprotocol FeedForward
-  (feed-forward [this forces]) "process input through neuron(s) to calc output")
+  (feed-forward [this forces] "process input through neuron(s) to calc output"))
 
 (defprotocol Mobile
   (move [this] "calc next motion state for the mobile object"))
