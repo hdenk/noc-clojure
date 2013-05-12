@@ -6,7 +6,7 @@
             [nature-of-code.math.vector :as mv]))
 
 (def params 
-  {:size-x 800 
+  {:size-x 600 
    :size-y 200
    :background 255
    :frame-rate 30
@@ -80,16 +80,13 @@
 
 (defn init-model [m-atom] 
   (swap! 
-    m-atom 
-    (fn [m] 
-      (assoc m :oscillators (make-oscillators))))
+    m-atom assoc :oscillators (make-oscillators)) 
   m-atom)
 
 (defn update-model [m-atom]
   (swap!
     m-atom
-    (fn [m]
-      (assoc m :oscillators (map move (:oscillators @m-atom)))))
+    #(assoc % :oscillators (map move (:oscillators %))))
   m-atom)
 
 (defn setup-sketch []
