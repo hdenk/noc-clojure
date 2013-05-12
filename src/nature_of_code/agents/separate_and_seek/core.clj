@@ -1,5 +1,5 @@
 (ns nature-of-code.agents.separate-and-seek.core
-  "Primitive Agent steers towards Target 
+  "Multiple agents are attracted by mouse and try to keep separate 
   Based on the Nature of Code by Daniel Shiffman http://natureofcode.com"
   (:require [quil.core :as q]
             [nature-of-code.math.vector :as mv]))
@@ -38,14 +38,15 @@
 ;; Vehicle
 ;;
 
-(defn add-distance-to [sum [other-loc vehicle-loc]]
+(defn add-desire-to [sum [other-loc vehicle-loc]]
+  "reducer-fn that helps to sum up separation-forces"
   (let [separation-r (* (params :vehicle-r) 2)
         d (mv/distance vehicle-loc other-loc)]
     (if (and (> d 0) (< d separation-r))
-      (let [diff (mv/subtract vehicle-loc other-loc)
-            diff-n (mv/normalize diff)
-            weighted-distance (mv/divide diff-n d)]
-        (mv/add sum weighted-distance))
+      (let [desire (mv/subtract vehicle-loc other-loc)
+            desire-n (mv/normalize desire)
+            weighted-desire (mv/divide desire-n d)]
+        (mv/add sum weighted-desire))
         sum)))
   
 (defrecord Vehicle [id mass location velocity acceleration r max-speed max-force]
@@ -77,7 +78,7 @@
   
   (separate [this other-vehicles]
     (let [separation-r (* (params :vehicle-r) 2)
-          desired (reduce add-distance-to [0 0] (map #(vector (:location %1) %2) other-vehicles (repeat location)))]
+          desired (reduce add-desire-to [0 0] (map #(vector (:location %1) %2) other-vehicles (repeat location)))]
       (if (not (mv/null-vector? desired))
          (let [desired-n (mv/normalize desired)
                desired-max (mv/multiply desired-n max-speed)
